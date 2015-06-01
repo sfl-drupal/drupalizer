@@ -1,0 +1,8 @@
+# Ignore local-vars file
+local_vars.py
+
+# Ignore .pyc files
+*.pyc
+
+# Ignore IDES folders
+.idea
