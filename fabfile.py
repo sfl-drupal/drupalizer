@@ -133,21 +133,6 @@ def fab_remove_from_hosts(site_hostname):
     local('sudo sed -i "/{}/d" /etc/hosts'.format(site_hostname))
 
 
-@task(alias='dkuh')
-@roles('docker')
-def docker_update_host():
-    """
-    Helper function to update the ip and hostname in docker container
-    # Fix complains of sendmail about "unable to qualify my own domain name"
-    :return:
-    """
-    # Get the ip of the container, this
-    ip = local('docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" {}_container'.format(PROJECT_NAME), capture=True)
-    site_hostname = run("hostname")
-    run("sed  '/{}/c\{} {}  localhost.domainlocal' /etc/hosts > /root/hosts.backup".format(ip, ip, site_hostname))
-    run("cat /root/hosts.backup > /etc/hosts")
-
-
 def fab_update_hosts(ip, site_hostname):
     """
     Helper function to update the file /etc/hosts
@@ -374,6 +359,21 @@ def docker_ssh(role='local', path_key='~/.ssh/id_rsa'):
         fab_run(role, 'ssh -i {} root@{}'.format(path_key, ip))
 
 
+@task(alias='dkuh')
+@roles('docker')
+def docker_update_host():
+    """
+    Helper function to update the ip and hostname in docker container
+    # Fix complains of sendmail about "unable to qualify my own domain name"
+    :return:
+    """
+    # Get the ip of the container, this
+    ip = local('docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" {}_container'.format(PROJECT_NAME), capture=True)
+    site_hostname = run("hostname")
+    run("sed  '/{}/c\{} {}  localhost.domainlocal' /etc/hosts > /root/hosts.backup".format(ip, ip, site_hostname))
+    run("cat /root/hosts.backup > /etc/hosts")
+
+
 @task(alias='cp_keys')
 @roles('local')
 def copy_ssh_keys(role='local', ):
@@ -475,6 +475,40 @@ def drush_make(role='local', action='install'):
     print green('Drush make finished!')
 
 
+@task(alias='dc')
+@roles('docker')
+def drush_commands(role='docker', cmds=POST_INSTALL):
+    """
+    Execute a list of drush commands after the installation or update process
+    """
+    set_env(role)
+
+    if not LOCALE:
+        cmds.remove('drush po-import fr --custom-only')
+
+    for cmd in cmds:
+        with fab_cd(role, DRUPAL_ROOT):
+            fab_run(role, cmd)
+
+    print green('These Drush commands were executed: {}.'.format(', '.join(cmds)))
+
+
+@task(alias='dcf')
+@roles('local')
+def drush_config(role='local'):
+    """
+    Create drush aliases
+    """
+    set_env(role)
+    fab_run(role, 'mkdir {}'.format(DRUSH_ALIASES))
+    with fab_cd(role, DRUSH_ALIASES):
+        # Create aliases
+        fab_run(role, 'ln -s {}/deploy/aliases.drushrc.php .'.format(WORKSPACE))
+        # Download other drush commands
+        fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/po-import.git')
+    print green('Drush configuration done.')
+
+
 @task(alias='csy')
 @roles('docker')
 def create_symlinks(role='docker'):
@@ -497,42 +531,6 @@ def data_base_setup(role='docker'):
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
                   '\'{}\'@\'localhost\' IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(DB_NAME, DB_NAME,
                                                                                          DB_USER, DB_PASS))
-
-
-@task(alias='si')
-@roles('docker')
-def site_install(role='docker'):
-    """
-    Install site
-    """
-    set_env(role)
-    with fab_cd(role, DRUPAL_ROOT):
-        locale = '--locale="fr"' if LOCALE else ''
-
-        fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
-                      '--account-name={} --account-pass={} --sites-subdir={} -y'.format(APACHE, SITE_PROFILE, locale,
-                                                                                        DB_USER, DB_PASS,
-                                                                                        DB_HOST, DB_NAME, SITE_NAME,
-                                                                                        SITE_ADMIN_NAME,
-                                                                                        SITE_ADMIN_PASS,
-                                                                                        SITE_SUBDIR))
-    print green('Site installed successfully!')
-
-
-@task(alias='dcf')
-@roles('local')
-def drush_config(role='local'):
-    """
-    Create drush aliases
-    """
-    set_env(role)
-    fab_run(role, 'mkdir {}'.format(DRUSH_ALIASES))
-    with fab_cd(role, DRUSH_ALIASES):
-        # Create aliases
-        fab_run(role, 'ln -s {}/deploy/aliases.drushrc.php .'.format(WORKSPACE))
-        # Download other drush commands
-        fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/po-import.git')
-    print green('Drush configuration done.')
 
 
 @task(alias='cs')
@@ -585,24 +583,6 @@ def set_permission(role='docker'):
     fab_run(role, 'chmod -R 755 {}/sites/default'.format(DRUPAL_ROOT))
     fab_run(role, 'chmod -R 770 {}/sites/*/files'.format(DRUPAL_ROOT))
     secure_settings(env)
-
-
-@task(alias='dc')
-@roles('docker')
-def drush_commands(role='docker', cmds=POST_INSTALL):
-    """
-    Execute a list of drush commands after the installation or update process
-    """
-    set_env(role)
-
-    if not LOCALE:
-        cmds.remove('drush po-import fr --custom-only')
-
-    for cmd in cmds:
-        with fab_cd(role, DRUPAL_ROOT):
-            fab_run(role, cmd)
-
-    print green('These Drush commands were executed: {}.'.format(', '.join(cmds)))
 
 
 @task(alias='cb')
@@ -661,15 +641,24 @@ def run_behat(role='docker'):
         # fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&@yourTest" --colors')
 
 
-@task(alias='rbt')
+@task(alias='si')
 @roles('docker')
-def run_behat_tests(role='docker'):
+def site_install(role='docker'):
     """
-    Setup Behat configutation and run tests, the same that run fab rbht cbht
+    Install site
     """
     set_env(role)
-    behat_config(role)
-    run_behat(role)
+    with fab_cd(role, DRUPAL_ROOT):
+        locale = '--locale="fr"' if LOCALE else ''
+
+        fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
+                      '--account-name={} --account-pass={} --sites-subdir={} -y'.format(APACHE, SITE_PROFILE, locale,
+                                                                                        DB_USER, DB_PASS,
+                                                                                        DB_HOST, DB_NAME, SITE_NAME,
+                                                                                        SITE_ADMIN_NAME,
+                                                                                        SITE_ADMIN_PASS,
+                                                                                        SITE_SUBDIR))
+    print green('Site installed successfully!')
 
 
 @task(alias='su')
@@ -696,6 +685,25 @@ def site_update(role='docker'):
         print green('Aborting site updated!')
 
 
+@task(alias='sr')
+def site_reinstall():
+    """
+    Complete local re-installation process. To use generally inside the running container to reinstall the Drupal site.
+    The same that run: $ fab dr gpp dmk si dcf cs es ss dc cb
+    """
+    execute(delete_root)
+    execute(git_pull_profile)
+    execute(drush_make)
+    execute(site_install)
+    execute(drush_config)
+    execute(copy_settings)
+    execute(edit_settings)
+    execute(secure_settings)
+    execute(drush_commands)
+    execute(behat_config)
+    print green('Site reinstalled with success!')
+
+
 @task(alias='ls')
 @runs_once
 def local_setup():
@@ -720,22 +728,3 @@ def local_setup():
     execute(drush_commands)
     execute(behat_config)
     print green('Local setup finished with success!')
-
-
-@task(alias='sr')
-def site_reinstall():
-    """
-    Complete local re-installation process. To use generally inside the running container to reinstall the Drupal site.
-    The same that run: $ fab dr gpp dmk si dcf cs es ss dc cb
-    """
-    execute(delete_root)
-    execute(git_pull_profile)
-    execute(drush_make)
-    execute(site_install)
-    execute(drush_config)
-    execute(copy_settings)
-    execute(edit_settings)
-    execute(secure_settings)
-    execute(drush_commands)
-    execute(behat_config)
-    print green('Site reinstalled with success!')
