@@ -639,7 +639,7 @@ def run_behat(role='docker'):
     if not fab_exists(role, '{}/tests/behat/behat.yml'.format(WORKSPACE)):
         behat_config()
     with fab_cd(role, '{}/tests/behat'.format(WORKSPACE)):
-        fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled" --colors')
+        fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&~@test" --colors')
         # To run behat with only one test for example, comment previous line
         # and uncomment next one
         # fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&@yourTest" --colors')
