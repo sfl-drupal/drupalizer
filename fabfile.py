@@ -500,12 +500,16 @@ def drush_config(role='local'):
     Create drush aliases
     """
     set_env(role)
-    fab_run(role, 'mkdir {}'.format(DRUSH_ALIASES))
+    if not fab_exists(role, DRUSH_ALIASES):
+        fab_run(role, 'mkdir {}'.format(DRUSH_ALIASES))
     with fab_cd(role, DRUSH_ALIASES):
         # Create aliases
+        if fab_exists(role, '{}/aliases.drushrc.php'.format(DRUSH_ALIASES)):
+            fab_run(role, 'rm aliases.drushrc.php')
         fab_run(role, 'ln -s {}/deploy/aliases.drushrc.php .'.format(WORKSPACE))
         # Download other drush commands
-        fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/po-import.git')
+        if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
+            fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/po-import.git')
     print green('Drush configuration done.')
 
 
