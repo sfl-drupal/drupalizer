@@ -243,13 +243,9 @@ def docker_create_image(role='local'):
     with fab_cd(role, WORKSPACE):
         if '{}/drupal'.format(PROJECT_NAME) in docker_images():
             print(red('Docker image {}/drupal was found, you has already build this image'.format(PROJECT_NAME)))
-        elif 'sflinux/baseimage' in docker_images():
+        else:
             fab_run(role, 'docker build -t {}/drupal .'.format(PROJECT_NAME))
             print(green('Docker image {}/drupal was build successful'.format(PROJECT_NAME)))
-        else:
-            print(red('Docker image "sflinux/baseimage" not found and is a requirement to build the {}/drupal. '
-                      'Please read carefully the README.md and install all the requirements'.format(PROJECT_NAME)))
-
 
 @task(alias='crun')
 @roles('local')
