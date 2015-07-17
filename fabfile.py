@@ -374,22 +374,21 @@ def docker_update_host():
 @roles('local')
 def copy_ssh_keys(role='local', ):
     """
-    Copy your ssh keys to use it in the docker container to clone git projects and to connect to it using ssh protocol
+    Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
     """
     set_env(role)
     copy = True
     if fab_exists(role, '{}/deploy/id_rsa.pub'.format(WORKSPACE)):
-        if confirm(red('There is a SSH key in your deploy directory Say [Y] to keep this key, say [n] to overwrite '
+        if confirm(red('There is a public SSH key in your deploy directory Say [Y] to keep this key, say [n] to overwrite '
                    'the key')):
             copy = False
 
     with fab_cd(role, WORKSPACE):
         if copy:
             fab_run(role, 'cp ~/.ssh/id_rsa.pub deploy/')
-            fab_run(role, 'openssl rsa -in ~/.ssh/id_rsa -out deploy/id_rsa')
-            print(green('SSH key copied successful'))
+            print(green('Public SSH key copied successful'))
         else:
-            print(red('Keeping the existing SSH key'))
+            print(red('Keeping the existing public SSH key'))
 
 
 # Task to manage Git task in projetcs generally in the localhost#
