@@ -120,8 +120,13 @@ def fab_add_to_hosts(ip, site_hostname):
     if confirm(green('Do you want add to the /etc/hosts the line "{}    {}"? '
                      'If you say yes you will be able to visit the site using a more frienldy url '
                      '"http://{}".'.format(ip, site_hostname, site_hostname))):
-        local('sudo sed -i "/127.0.0.1/i\{}     {}" /etc/hosts'.format(ip, site_hostname))
+	# Remove if find to add later the comment "# Docker auto-added host" to the file /etc/hosts
+        # TODO: Find a better way to update or add the comment
+        local('sudo sed -i "/# Docker auto-added host/d" /etc/hosts')
+        local('sudo sed -i "$ a # Docker auto-added host" /etc/hosts')
 
+        # Add the ip address and hostname after the comment "# Docker auto-added host"
+        local('sudo sed -i "/# Docker auto-added host/a {}     {}" /etc/hosts'.format(ip, site_hostname))
 
 def fab_remove_from_hosts(site_hostname):
     """
