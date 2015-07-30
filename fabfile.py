@@ -23,6 +23,9 @@ from fabric.colors import red, green
 from fabric.contrib.files import exists
 from fabric.contrib.console import confirm
 
+# Import socket to find the localhost IP address
+import socket
+
 # Import default variables
 from default_vars import *
 
@@ -43,6 +46,9 @@ env.roledefs['docker'] = ["root@{}".format(SITE_HOSTNAME)]
 
 # Flag to use for install the site with or without translations
 LOCALE = False
+
+# The CONTAINER_IP will be set at the creation of the container, see @task docker_run_container
+CONTAINER_IP = None
 
 
 def set_env(role):
@@ -68,6 +74,12 @@ def set_env(role):
 
     global DRUSH_ALIASES
     DRUSH_ALIASES = path.join(DRUPAL_ROOT, 'sites/all/drush')
+
+    global DOCKER_IFACE_IP
+    DOCKER_IFACE_IP = None
+    if CONTAINER_IP:
+        DOCKER_IFACE_IP = [(s.connect((CONTAINER_IP, 80)), s.getsockname()[0], s.close())
+                           for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
 
 
 def fab_run(role="local", cmd="", capture=False):
@@ -121,10 +133,12 @@ def fab_add_to_hosts(ip, site_hostname):
                      'If you say yes you will be able to visit the site using a more frienldy url '
                      '"http://{}".'.format(ip, site_hostname, site_hostname))):
         # Add if not find the comment "# Docker auto-added host" to the file /etc/hosts
-        local('grep "# Docker auto-added host" /etc/hosts > /dev/null || sudo sed -i "$ a # Docker auto-added host" /etc/hosts')
+        local('grep "# Docker auto-added host" /etc/hosts > /dev/null || '
+              'sudo sed -i "$ a # Docker auto-added host" /etc/hosts')
 
         # Add the ip address and hostname after the comment "# Docker auto-added host"
         local('sudo sed -i "/# Docker auto-added host/a {}     {}" /etc/hosts'.format(ip, site_hostname))
+
 
 def fab_remove_from_hosts(site_hostname):
     """
@@ -250,6 +264,7 @@ def docker_create_image(role='local'):
             fab_run(role, 'docker build -t {}/drupal .'.format(PROJECT_NAME))
             print(green('Docker image {}/drupal was build successful'.format(PROJECT_NAME)))
 
+
 @task(alias='crun')
 @roles('local')
 def docker_run_container(role='local'):
@@ -264,9 +279,10 @@ def docker_run_container(role='local'):
                              '-d -p {}:80'.format(DOCKER_PORT_TO_BIND),
                              mounts=[(WORKSPACE, DOCKER_WORKSPACE, True)]):
                 # If container was successful build, get the IP address and show it to the user.
-                ip = fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
-                                   '{}_container'.format(PROJECT_NAME), capture=True)
-                fab_update_hosts(ip, SITE_HOSTNAME)
+                global CONTAINER_IP
+                CONTAINER_IP = fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
+                                             '{}_container'.format(PROJECT_NAME), capture=True)
+                fab_update_hosts(CONTAINER_IP, SITE_HOSTNAME)
                 print(green('Docker container {}_container was build successful. '
                             'To visit the Website open a web browser in http://{} or '
                             'http://localhost:{}.'.format(PROJECT_NAME, SITE_HOSTNAME, DOCKER_PORT_TO_BIND)))
@@ -352,25 +368,26 @@ def docker_ssh(role='local', path_key='~/.ssh/id_rsa'):
     Connect to a docker container through ssh protocol using you private key that should be in '~/.ssh/id_rsa'
     """
     set_env(role)
-    ip = fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" {}_container'.format(PROJECT_NAME),
-                 capture=True)
-    if ip:
-        fab_run(role, 'ssh -i {} root@{}'.format(path_key, ip))
+    global CONTAINER_IP
+    if CONTAINER_IP:
+        fab_run(role, 'ssh -i {} root@{}'.format(path_key, CONTAINER_IP))
 
 
 @task(alias='dkuh')
 @roles('docker')
 def docker_update_host():
     """
-    Helper function to update the ip and hostname in docker container
+    Helper function to update the IP and hostname in docker container
     # Fix complains of sendmail about "unable to qualify my own domain name"
     :return:
     """
-    # Get the ip of the container, this
-    ip = local('docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" {}_container'.format(PROJECT_NAME), capture=True)
-    site_hostname = run("hostname")
-    run("sed  '/{}/c\{} {}  localhost.domainlocal' /etc/hosts > /root/hosts.backup".format(ip, ip, site_hostname))
-    run("cat /root/hosts.backup > /etc/hosts")
+    # Get the IP of the container, this
+    global CONTAINER_IP
+    if CONTAINER_IP:
+        site_hostname = run("hostname")
+        run("sed  '/{}/c\{} {}  localhost.domainlocal' "
+            "/etc/hosts > /root/hosts.backup".format(CONTAINER_IP, CONTAINER_IP, site_hostname))
+        run("cat /root/hosts.backup > /etc/hosts")
 
 
 @task(alias='cp_keys')
@@ -382,8 +399,8 @@ def copy_ssh_keys(role='local', ):
     set_env(role)
     copy = True
     if fab_exists(role, '{}/deploy/id_rsa.pub'.format(WORKSPACE)):
-        if confirm(red('There is a public SSH key in your deploy directory Say [Y] to keep this key, say [n] to overwrite '
-                   'the key')):
+        if confirm(red('There is a public SSH key in your deploy directory Say [Y] to keep this key, say [n] to '
+                       'overwrite the key')):
             copy = False
 
     with fab_cd(role, WORKSPACE):
@@ -531,8 +548,9 @@ def data_base_setup(role='docker'):
     """
     set_env(role)
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
-                  '\'{}\'@\'%\' IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(DB_NAME, DB_NAME,
-                                                                                         DB_USER, DB_PASS))
+                  '\'{}\'@\'localhost\' IDENTIFIED BY \'{}\'; GRANT ALL PRIVILEGES ON {}.* TO \'{}\'@\'{}\' '
+                  'IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(DB_NAME, DB_NAME, DB_USER, DB_PASS,
+                                                                    DB_NAME, DB_USER, DOCKER_IFACE_IP, DB_PASS))
 
 
 @task(alias='cs')
