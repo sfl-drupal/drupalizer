@@ -531,7 +531,7 @@ def data_base_setup(role='docker'):
     """
     set_env(role)
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
-                  '\'{}\'@\'localhost\' IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(DB_NAME, DB_NAME,
+                  '\'{}\'@\'%\' IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(DB_NAME, DB_NAME,
                                                                                          DB_USER, DB_PASS))
 
 
