@@ -524,7 +524,7 @@ def drush_config(role='local'):
         fab_run(role, 'ln -s {}/deploy/aliases.drushrc.php .'.format(WORKSPACE))
         # Download other drush commands
         if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
-            fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/po-import.git')
+            fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
     print green('Drush configuration done.')
 
 
