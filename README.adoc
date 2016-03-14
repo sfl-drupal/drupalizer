@@ -1,3 +1,26 @@
+:keywords: Drupal, Drupalizer, SFL, SFLinux, AsciiDoc, Asciidoctor
+:page-layout: base
+:page-description: {description}
+:page-keywords: {keywords}
+ifdef::env-site[]
+:toc:
+:toc-placement: preamble
+endif::[]
+ifndef::env-site[]
+:toc: right
+:icons: font
+:idprefix:
+:idseparator: -
+:sectanchors:
+:source-highlighter: highlight.js
+endif::[]
+:experimental:
+:mdash: &#8212;
+:language: asciidoc
+:source-language: {language}
+// Refs
+
+
 === Drupalizer tasks
 
 *Drupalizer* is a Fabric script on top of Docker and tightly integrated with Drush and Drupal that provides the developer high-level tasks to manage the local development environment.
@@ -32,15 +55,16 @@ The most common tasks supported by *Drupalizer* would be:
  $ fab site_update
  $ fab su
 
+CAUTION: This command will wipe all the modifications made in the working directories.
+
 * _Update_ the full codebase by running the top-level Makefile, _flush_ the database and _run_ the Drupal installation process:
 
  $ fab site_reinstall
  $ fab sr
 
+CAUTION: This command will wipe all the modifications made in the working directories.
+
 * _Bash_ into the Docker container:
 
  $ fab connect
  $ fab ssh
-
-
-
