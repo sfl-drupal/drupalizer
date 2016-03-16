@@ -461,6 +461,8 @@ def release(role='local'):
       fab_run(role, 'rm -f {}/*.tar.gz'.format(BUILDDIR))
       print(green('Archiving the platform'))
       fab_run(role, 'tar -czf {}/{} {}'.format(BUILDDIR, PLATFORMNAME, DRUPAL_ROOT))
+      print(green('Generate the README'))
+      fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README'.format(BUILDDIR, WORKSPACE))
 
 # Task to manage Drupal site generally in the docker container#
 ###############################################################
