@@ -398,14 +398,14 @@ def copy_ssh_keys(role='local', ):
     """
     set_env(role)
     copy = True
-    if fab_exists(role, '{}/deploy/id_rsa.pub'.format(WORKSPACE)):
-        if confirm(red('There is a public SSH key in your deploy directory Say [Y] to keep this key, say [n] to '
+    if fab_exists(role, '{}/conf/id_rsa.pub'.format(WORKSPACE)):
+        if confirm(red('There is a public SSH key in your conf directory Say [Y] to keep this key, say [n] to '
                        'overwrite the key')):
             copy = False
 
     with fab_cd(role, WORKSPACE):
         if copy:
-            fab_run(role, 'cp ~/.ssh/id_rsa.pub deploy/')
+            fab_run(role, 'cp ~/.ssh/id_rsa.pub conf/')
             print(green('Public SSH key copied successful'))
         else:
             print(red('Keeping the existing public SSH key'))
@@ -521,7 +521,7 @@ def drush_config(role='local'):
         # Create aliases
         if fab_exists(role, '{}/aliases.drushrc.php'.format(DRUSH_ALIASES)):
             fab_run(role, 'rm aliases.drushrc.php')
-        fab_run(role, 'ln -s {}/deploy/aliases.drushrc.php .'.format(WORKSPACE))
+        fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(WORKSPACE))
         # Download other drush commands
         if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
             fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
@@ -561,7 +561,7 @@ def copy_settings(role='docker', site_env=SITE_ENVIRONMENT):
     """
     set_env(role)
     fab_run(role,
-            'cp {}/deploy/env/settings.{}.php {}/sites/default/settings.{}.php'.format(WORKSPACE, site_env, DRUPAL_ROOT,
+            'cp {}/conf/env/settings.{}.php {}/sites/default/settings.{}.php'.format(WORKSPACE, site_env, DRUPAL_ROOT,
                                                                                        site_env))
     print green('settings.{}.php copied in "sites/default".'.format(site_env))
 
