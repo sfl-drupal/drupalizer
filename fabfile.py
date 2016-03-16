@@ -75,6 +75,9 @@ def set_env(role):
     global DRUSH_ALIASES
     DRUSH_ALIASES = path.join(DRUPAL_ROOT, 'sites/all/drush')
 
+    global BUILDDIR
+    BUILDDIR = path.join(WORKSPACE, 'build')
+
     global DOCKER_IFACE_IP
     DOCKER_IFACE_IP = None
     if CONTAINER_IP:
@@ -422,7 +425,7 @@ def git_pull_profile(role='local'):
     """
     set_env(role)
     for profile in PROFILE:
-        with fab_cd(role, path.join(WORKSPACE, profile)):
+        with fab_cd(role, path.join(BUILDDIR, profile)):
             print(green('git pull for project {}'.format(profile)))
             fab_run(role, 'git pull')
 
@@ -435,8 +438,8 @@ def git_clone_profile(role='local'):
     """
     set_env(role)
     for profile in PROFILE:
-        with fab_cd(role, WORKSPACE):
-            if fab_exists(role, path.join(WORKSPACE, profile)):
+        with fab_cd(role, BUILDDIR):
+            if fab_exists(role, path.join(BUILDDIR, profile)):
                 print(red('This project {} was already clone'.format(profile)))
                 continue
             print(green('git clone for project {}'.format(profile)))
