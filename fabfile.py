@@ -686,7 +686,7 @@ def run_behat(role='docker'):
         # fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&@yourTest" --colors')
 
 
-@task(alias='si')
+@task(alias='install')
 @roles('docker')
 def site_install(role='docker'):
     """
@@ -705,6 +705,8 @@ def site_install(role='docker'):
                                                                                         SITE_SUBDIR))
     print green('Site installed successfully!')
 
+    print green('Running post-install commands.')
+    execute(drush_commands)
 
 @task(alias='su')
 @roles('docker')
