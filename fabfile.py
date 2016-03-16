@@ -453,20 +453,28 @@ def git_clone_profile(role='local'):
 
 @task(alias='rel')
 @roles('local')
-def release(role='local'):
+def gen_doc(role='local'):
+    """
+    Generate README file
+    """
+    set_env(role)
+    print(green('Generate the README'))
+    fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README'.format(BUILDDIR, WORKSPACE))
+   
+@task(alias='ard')
+@roles('docker')
+def archive_dump(role='docker'):
     """
     Archive the platform for release or deployment
     """
     set_env(role)
     with fab_cd(role, DRUPAL_ROOT):
-      PLATFORMNAME = '{}-{}.tar.gz'.format(PROJECT_NAME, datetime.now().strftime('%Y%m%d_%H%M%S'))
+      PLATFORM = '{}-{}.tar.gz'.format(PROJECT_NAME, datetime.now().strftime('%Y%m%d_%H%M%S'))
       print(green('Cleaning previous archives'))
       fab_run(role, 'rm -f {}/*.tar.gz'.format(BUILDDIR))
       print(green('Archiving the platform'))
-      fab_run(role, 'tar -czf {}/{} {}'.format(BUILDDIR, PLATFORMNAME, DRUPAL_ROOT))
-      print(green('Generate the README'))
-      fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README'.format(BUILDDIR, WORKSPACE))
-
+      fab_run(role, 'drush archive-dump --destination={}/{} --tar-options="--exclude=.git"'.format(BUILDDIR, PLATFORM)) 
+ 
 # Task to manage Drupal site generally in the docker container#
 ###############################################################
 
@@ -750,6 +758,18 @@ def site_reinstall():
     execute(behat_config)
     print green('Site reinstalled with success!')
 
+@task(alias='tests')
+def run_tests():
+    print green('Tests execution tasks is about to start')
+    execute(behat_config)
+    execute(run_behat)
+    print green('Tests: Done!')
+  
+@task(alias='release')
+def release():
+    print green('Generating release artefacts')
+    execute(archive_dump)
+    execute(gen_doc)
 
 @task(alias='ls')
 @runs_once
