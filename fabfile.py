@@ -468,8 +468,8 @@ def release(role='local'):
 ###############################################################
 
 @task(alias='dr')
-@roles('local')
-def delete_root(role='local', delete=False):
+@roles('docker')
+def delete_root(role='docker', delete=False):
     """
     Delete existing Drupal installation
     """
@@ -477,7 +477,7 @@ def delete_root(role='local', delete=False):
     if fab_exists(role, DRUPAL_ROOT):
         if delete == 'y' or confirm(red('A Drupal installation is already present, do you really whish to remove it? '
                                         '(everything will be lost)')):
-            fab_run(role, 'sudo rm -rf {}'.format(DRUPAL_ROOT))
+            fab_run(role, 'rm -rf {}'.format(DRUPAL_ROOT))
             print green('Drupal installation deleted.')
         else:
             print(red('Drupal installation was not deleted.'))
