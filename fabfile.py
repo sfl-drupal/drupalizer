@@ -485,7 +485,7 @@ def delete_root(role='docker', delete=False):
         print green('No Drupal installation is present, we can build a new one.')
 
 
-@task(alias='dmk')
+@task(alias='make')
 @roles('local')
 def drush_make(role='local', action='install'):
     """
@@ -501,8 +501,7 @@ def drush_make(role='local', action='install'):
         LOCALE = True
 
     drush_opts += "--contrib-destination=profiles/{} ".format(PROFILE.keys()[0])
-    if confirm(red('Say [Y] to build distribution at {} in development mode, if you say [n] '
-                   'the distribution will be build in release mode'.format(DRUPAL_ROOT))):
+    if not hasattr(env, 'mode') or env.mode!= 'release': 
         drush_opts += " --working-copy --no-gitinfofile"
     if not fab_exists(role, DRUPAL_ROOT):
         fab_run(role, "mkdir {}".format(DRUPAL_ROOT))
