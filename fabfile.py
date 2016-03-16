@@ -69,14 +69,14 @@ def set_env(role):
         'docker': DOCKER_DRUPAL_ROOT
     }[role]
 
+    global BUILDDIR
+    BUILDDIR = path.join(WORKSPACE, 'build')
+
     global MAKEFILE
-    MAKEFILE = '{}/{}/{}'.format(WORKSPACE, PROFILE.keys()[0], PROFILE_MAKE_FILE)
+    MAKEFILE = '{}/{}/{}'.format(BUILDDIR, PROFILE.keys()[0], PROFILE_MAKE_FILE)
 
     global DRUSH_ALIASES
     DRUSH_ALIASES = path.join(DRUPAL_ROOT, 'sites/all/drush')
-
-    global BUILDDIR
-    BUILDDIR = path.join(WORKSPACE, 'build')
 
     global DOCKER_IFACE_IP
     DOCKER_IFACE_IP = None
