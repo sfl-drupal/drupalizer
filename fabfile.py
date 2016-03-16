@@ -26,6 +26,9 @@ from fabric.contrib.console import confirm
 # Import socket to find the localhost IP address
 import socket
 
+# Import datetime
+from datetime import datetime
+
 # Import default variables
 from default_vars import *
 
@@ -445,6 +448,19 @@ def git_clone_profile(role='local'):
             print(green('git clone for project {}'.format(profile)))
             fab_run(role, 'git clone {} {}'.format(PROFILE[profile], profile))
 
+@task(alias='rel')
+@roles('local')
+def release(role='local'):
+    """
+    Archive the platform for release or deployment
+    """
+    set_env(role)
+    with fab_cd(role, DRUPAL_ROOT):
+      PLATFORMNAME = '{}-{}.tar.gz'.format(PROJECT_NAME, datetime.now().strftime('%Y%m%d_%H%M%S'))
+      print(green('Cleaning previous archives'))
+      fab_run(role, 'rm -f {}/*.tar.gz'.format(BUILDDIR))
+      print(green('Archiving the platform'))
+      fab_run(role, 'tar -czf {}/{} {}'.format(BUILDDIR, PLATFORMNAME, DRUPAL_ROOT))
 
 # Task to manage Drupal site generally in the docker container#
 ###############################################################
