@@ -60,6 +60,9 @@ def set_env(role):
     :param role: the role to use for define the host
     :return:
     """
+    global INTERACTIVE_MODE
+    INTERACTIVE_MODE = False if hasattr(env, 'mode') and env.mode == 'release' else True
+
     global WORKSPACE
     WORKSPACE = {
         'local': LOCAL_WORKSPACE,
@@ -494,14 +497,16 @@ def drush_make(role='local', action='install'):
     set_env(role)
     drush_opts = "--prepare-install " if action != 'update' else ''
 
-    if confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
+    print green('Interactive mode enabled: {}'.format(INTERACTIVE_MODE))
+
+    if INTERACTIVE_MODE and confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
                    'the site will be installed in English only'.format(action, DRUPAL_ROOT))):
         drush_opts += "--translations=fr "
         global LOCALE
         LOCALE = True
 
     drush_opts += "--contrib-destination=profiles/{} ".format(PROFILE.keys()[0])
-    if not hasattr(env, 'mode') or env.mode!= 'release': 
+    if INTERACTIVE_MODE:
         drush_opts += " --working-copy --no-gitinfofile"
     if not fab_exists(role, DRUPAL_ROOT):
         fab_run(role, "mkdir {}".format(DRUPAL_ROOT))
