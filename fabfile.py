@@ -507,7 +507,7 @@ def drush_make(role='local', action='install'):
 
     print green('Interactive mode enabled: {}'.format(INTERACTIVE_MODE))
 
-    if INTERACTIVE_MODE and confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
+    if (INTERACTIVE_MODE and confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] ') or not INTERACTIVE_MODE:
                    'the site will be installed in English only'.format(action, DRUPAL_ROOT))):
         drush_opts += "--translations=fr "
         global LOCALE
