@@ -556,8 +556,8 @@ def drush_config(role='local'):
             fab_run(role, 'rm aliases.drushrc.php')
         fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(WORKSPACE))
         # Download other drush commands
-        if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
-            fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
+        #if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
+        #    fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
     print green('Drush configuration done.')
 
 
@@ -688,7 +688,7 @@ def run_behat(role='docker'):
     if not fab_exists(role, '{}/tests/behat/behat.yml'.format(WORKSPACE)):
         behat_config()
     with fab_cd(role, '{}/tests/behat'.format(WORKSPACE)):
-        fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&~@test" --colors')
+        fab_run(role, 'behat --format junit --format pretty --tags "~@wip&&~@disabled&&~@test" --colors')
         # To run behat with only one test for example, comment previous line
         # and uncomment next one
         # fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&@yourTest" --colors')
