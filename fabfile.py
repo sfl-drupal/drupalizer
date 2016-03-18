@@ -264,6 +264,7 @@ def docker_images():
 def docker_create_image(role='local'):
     """
     Create docker images
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -279,6 +280,7 @@ def docker_create_image(role='local'):
 def docker_run_container(role='local'):
     """
     Run docker containers
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -307,6 +309,7 @@ def docker_run_container(role='local'):
 def docker_stop_container(role='local'):
     """
     Stop docker containers
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -323,6 +326,7 @@ def docker_stop_container(role='local'):
 def docker_remove_container(role='local'):
     """
     Stop docker containers
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -339,6 +343,7 @@ def docker_remove_container(role='local'):
 def docker_remove_image(role='local'):
     """
     Remove docker container and images
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -361,6 +366,7 @@ def docker_connect(role='local'):
     """
     Connect to a docker container using "docker -it exec <name> bash".
     This is a better way to connect to the container than using ssh'
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, WORKSPACE):
@@ -375,6 +381,8 @@ def docker_connect(role='local'):
 def docker_ssh(role='local', path_key='~/.ssh/id_rsa'):
     """
     Connect to a docker container through ssh protocol using you private key that should be in '~/.ssh/id_rsa'
+    :param role Default 'role' where to run the task
+    :param path_key Location of the private ssh key
     """
     set_env(role)
     global CONTAINER_IP
@@ -404,6 +412,7 @@ def docker_update_host():
 def copy_ssh_keys(role='local', ):
     """
     Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     copy = True
@@ -428,6 +437,7 @@ def copy_ssh_keys(role='local', ):
 def git_pull_profile(role='local'):
     """
     Git pull for install profile
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     for profile in PROFILE:
@@ -441,6 +451,7 @@ def git_pull_profile(role='local'):
 def git_clone_profile(role='local'):
     """
     Git clone for install profile
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     for profile in PROFILE:
@@ -451,43 +462,53 @@ def git_clone_profile(role='local'):
             print(green('git clone for project {}'.format(profile)))
             fab_run(role, 'git clone {} {}'.format(PROFILE[profile], profile))
 
+
 @task(alias='rel')
 @roles('local')
 def gen_doc(role='local'):
     """
     Generate README file
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     print(green('Generate the README'))
     fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README'.format(BUILDDIR, WORKSPACE))
-   
+
+
 @task(alias='ard')
 @roles('docker')
 def archive_dump(role='docker'):
     """
     Archive the platform for release or deployment
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, DRUPAL_ROOT):
-      PLATFORM = '{}-{}.tar.gz'.format(PROJECT_NAME, datetime.now().strftime('%Y%m%d_%H%M%S'))
-      print(green('Cleaning previous archives'))
-      fab_run(role, 'rm -f {}/*.tar.gz'.format(BUILDDIR))
-      print(green('Archiving the platform'))
-      fab_run(role, 'drush archive-dump --destination={}/{} --tar-options="--exclude=.git"'.format(BUILDDIR, PLATFORM)) 
- 
+        platform = '{}-{}.tar.gz'.format(PROJECT_NAME, datetime.now().strftime('%Y%m%d_%H%M%S'))
+        print(green('Cleaning previous archives'))
+        fab_run(role, 'rm -f {}/*.tar.gz'.format(BUILDDIR))
+        print(green('Archiving the platform'))
+        fab_run(
+            role,
+            'drush archive-dump --destination={}/{} --tar-options="--exclude=.git"'.format(BUILDDIR, platform)
+        )
+
+
 # Task to manage Drupal site generally in the docker container#
 ###############################################################
 
+
 @task(alias='dr')
 @roles('docker')
-def delete_root(role='docker', delete=False):
+def delete_root(role='docker'):
     """
     Delete existing Drupal installation
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     if fab_exists(role, DRUPAL_ROOT):
-        if delete == 'y' or confirm(red('A Drupal installation is already present, do you really whish to remove it? '
-                                        '(everything will be lost)')):
+        if (INTERACTIVE_MODE or confirm(red('A Drupal installation is already present, do you really whish to remove '
+                                            'it? (everything will be lost)'))) or not INTERACTIVE_MODE:
             fab_run(role, 'rm -rf {}'.format(DRUPAL_ROOT))
             print green('Drupal installation deleted.')
         else:
@@ -501,6 +522,8 @@ def delete_root(role='docker', delete=False):
 def drush_make(role='local', action='install'):
     """
     Prepare the site for installation with makefile
+    :param role Default 'role' where to run the task
+    :param action Default to 'install' it could be 'update' too.
     """
     set_env(role)
     drush_opts = "--prepare-install " if action != 'update' else ''
@@ -508,7 +531,8 @@ def drush_make(role='local', action='install'):
     print green('Interactive mode enabled: {}'.format(INTERACTIVE_MODE))
 
     if (INTERACTIVE_MODE and confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
-                   'the site will be installed in English only'.format(action, DRUPAL_ROOT)))) or not INTERACTIVE_MODE:
+                                         'the site will be installed in English only'.format(action, DRUPAL_ROOT)))
+        ) or not INTERACTIVE_MODE:
         drush_opts += "--translations=fr "
         global LOCALE
         LOCALE = True
@@ -528,6 +552,8 @@ def drush_make(role='local', action='install'):
 def drush_commands(role='docker', cmds=POST_INSTALL):
     """
     Execute a list of drush commands after the installation or update process
+    :param role Default 'role' where to run the task
+    :param cmds Drush commands to run, default to POST_INSTALL, it could be POST_UPDATE too.
     """
     set_env(role)
 
@@ -546,6 +572,7 @@ def drush_commands(role='docker', cmds=POST_INSTALL):
 def drush_config(role='local'):
     """
     Create drush aliases
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     if not fab_exists(role, DRUSH_ALIASES):
@@ -556,8 +583,8 @@ def drush_config(role='local'):
             fab_run(role, 'rm aliases.drushrc.php')
         fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(WORKSPACE))
         # Download other drush commands
-        #if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
-        #    fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
+        # if not fab_exists(role, '{}/po-import'.format(DRUSH_ALIASES)):
+        #     fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
     print green('Drush configuration done.')
 
 
@@ -565,7 +592,8 @@ def drush_config(role='local'):
 @roles('docker')
 def create_symlinks(role='docker'):
     """
-    Create symlinks for the site
+    Create symlinks for the
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     fab_run(role, 'rm -rf {}'.format(DRUPAL_ROOT))
@@ -578,6 +606,7 @@ def create_symlinks(role='docker'):
 def data_base_setup(role='docker'):
     """
     Setup database for site install
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
@@ -591,11 +620,13 @@ def data_base_setup(role='docker'):
 def copy_settings(role='docker', site_env=SITE_ENVIRONMENT):
     """
     Copy settings for the current environment
+    :param role Default 'role' where to run the task
+    :param site_env The site environment to setup the settings.
     """
     set_env(role)
     fab_run(role,
             'cp {}/conf/env/settings.{}.php {}/sites/default/settings.{}.php'.format(WORKSPACE, site_env, DRUPAL_ROOT,
-                                                                                       site_env))
+                                                                                     site_env))
     print green('settings.{}.php copied in "sites/default".'.format(site_env))
 
 
@@ -604,6 +635,8 @@ def copy_settings(role='docker', site_env=SITE_ENVIRONMENT):
 def edit_settings(role='docker', site_env=SITE_ENVIRONMENT):
     """
     Include environment settings in settings.php
+    :param role Default 'role' where to run the task
+    :param site_env The site environment to setup the settings.
     """
     set_env(role)
     settings = '{}/sites/default/settings.php'.format(DRUPAL_ROOT)
@@ -618,6 +651,7 @@ def edit_settings(role='docker', site_env=SITE_ENVIRONMENT):
 def secure_settings(role='docker'):
     """
     Set the correct permissions for settings.php
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     fab_run(role, 'chmod 644 {}/sites/default/settings.php'.format(DRUPAL_ROOT))
@@ -629,6 +663,7 @@ def secure_settings(role='docker'):
 def set_permission(role='docker'):
     """
     Set the correct permissions for the entire site.
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     fab_run(role, 'sudo chown -R {}:{} {}'.format(user_name, APACHE, DRUPAL_ROOT))
@@ -643,6 +678,8 @@ def set_permission(role='docker'):
 def behat_config(role='docker', rewrite=True):
     """
     Create and configure behat.yml
+    :param role Default 'role' where to run the task
+    :param rewrite If the behat.yml file should be rewrited or not.
     """
     set_env(role)
     if not fab_exists(role, '{}/tests/behat/behat.yml'.format(WORKSPACE)) or rewrite:
@@ -661,6 +698,7 @@ def behat_config(role='docker', rewrite=True):
 def install_behat(role='docker'):
     """
     Install behat
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     if not fab_exists(role, '/usr/local/bin/behat'):
@@ -678,6 +716,7 @@ def install_behat(role='docker'):
 def run_behat(role='docker'):
     """
     Run behat tests
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     fab_run(role, 'mkdir -p {}/logs/behat'.format(WORKSPACE))
@@ -699,6 +738,7 @@ def run_behat(role='docker'):
 def site_install(role='docker'):
     """
     Install site
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     with fab_cd(role, DRUPAL_ROOT):
@@ -716,11 +756,13 @@ def site_install(role='docker'):
     print green('Running post-install commands.')
     execute(drush_commands)
 
+
 @task(alias='su')
 @roles('docker')
 def site_update(role='docker'):
     """
     Update site
+    :param role Default 'role' where to run the task
     """
     set_env(role)
     if confirm(red('Update the site will wipe out contrib and custom modules, '
@@ -758,18 +800,21 @@ def site_reinstall():
     execute(behat_config)
     print green('Site reinstalled with success!')
 
+
 @task(alias='tests')
 def run_tests():
     print green('Tests execution tasks is about to start')
     execute(behat_config)
     execute(run_behat)
     print green('Tests: Done!')
-  
+
+
 @task(alias='release')
 def release():
     print green('Generating release artefacts')
     execute(archive_dump)
     execute(gen_doc)
+
 
 @task(alias='ls')
 @runs_once
@@ -778,13 +823,13 @@ def local_setup():
     Complete local installation process, used generally when building the docker image for install and configure Drupal.
     The same that run: $ fab dr gcp cp_keys dmk icreate crun dkuh csy dbs si dcf cs es ss dc cb
     """
-    execute(delete_root)
     execute(git_clone_profile)
     execute(copy_ssh_keys)
-    execute(drush_make)
     execute(docker_create_image)
     execute(docker_run_container)
     execute(docker_update_host)
+    execute(delete_root)
+    execute(drush_make)
     execute(create_symlinks)
     execute(data_base_setup)
     execute(site_install)
