@@ -823,13 +823,13 @@ def local_setup():
     Complete local installation process, used generally when building the docker image for install and configure Drupal.
     The same that run: $ fab dr gcp cp_keys dmk icreate crun dkuh csy dbs si dcf cs es ss dc cb
     """
-    execute(delete_root)
     execute(git_clone_profile)
     execute(copy_ssh_keys)
-    execute(drush_make)
     execute(docker_create_image)
     execute(docker_run_container)
     execute(docker_update_host)
+    execute(delete_root)
+    execute(drush_make)
     execute(create_symlinks)
     execute(data_base_setup)
     execute(site_install)
