@@ -472,7 +472,7 @@ def gen_doc(role='local'):
     """
     set_env(role)
     print(green('Generate the README'))
-    fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README'.format(BUILDDIR, WORKSPACE))
+    fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(BUILDDIR, WORKSPACE))
 
 
 @task(alias='ard')
