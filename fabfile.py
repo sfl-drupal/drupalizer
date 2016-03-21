@@ -1,6 +1,6 @@
 # coding: utf-8
 #
-# Copyright (C) 2014 Savoir-faire Linux Inc. (<www.savoirfairelinux.com>).
+# Copyright (C) 2016 Savoir-faire Linux Inc. (<www.savoirfairelinux.com>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -37,8 +37,10 @@ if path.exists(path.join(path.dirname(__file__), 'local_vars.py')):
     from local_vars import *
 
 
+#####################################################################
 # Function to manage differents users, hosts, roles, and variables  #
 #####################################################################
+
 # Get info of the current user and host
 user_name = getuser()
 host_name = local("hostname", capture=True)
@@ -256,6 +258,7 @@ def docker_images():
     return [line.strip().split(' ')[0] for line in lines]
 
 
+###########################################################################
 # Task to manage docker's images and containers generally in the localhost#
 ###########################################################################
 
@@ -429,38 +432,27 @@ def copy_ssh_keys(role='local', ):
             print(red('Keeping the existing public SSH key'))
 
 
-# Task to manage Git task in projetcs generally in the localhost#
+#################################################################
+# Manage various bash-related tasks                             #
 #################################################################
 
-@task(alias='gpp')
+@task()
 @roles('local')
-def git_pull_profile(role='local'):
+def _update_profile(role='local'):
     """
-    Git pull for install profile
-    :param role Default 'role' where to run the task
+    Update or clone the installation profile specified in the configuration file.
+    The build file included will be used to build the application. 
     """
     set_env(role)
-    for profile in PROFILE:
+    profile = PROFILE.keys()[0]
+    if fab_exists(role, '{}/{}'.format(BUILDDIR, profile)):
         with fab_cd(role, path.join(BUILDDIR, profile)):
-            print(green('git pull for project {}'.format(profile)))
-            fab_run(role, 'git pull')
-
-
-@task(alias='gcp')
-@roles('local')
-def git_clone_profile(role='local'):
-    """
-    Git clone for install profile
-    :param role Default 'role' where to run the task
-    """
-    set_env(role)
-    for profile in PROFILE:
+            fab_run(role, 'git checkout . && git pull')
+            print green('{} installation profile updated in {}/{}'.format(profile, BUILDDIR, profile)) 
+    else:
         with fab_cd(role, BUILDDIR):
-            if fab_exists(role, path.join(BUILDDIR, profile)):
-                print(red('This project {} was already clone'.format(profile)))
-                continue
-            print(green('git clone for project {}'.format(profile)))
             fab_run(role, 'git clone {} {}'.format(PROFILE[profile], profile))
+            print green('{} installation profile cloned in {}/{}'.format(profile, BUILDDIR, profile)) 
 
 
 @task(alias='rel')
@@ -494,27 +486,24 @@ def archive_dump(role='docker'):
         )
 
 
+###############################################################
 # Task to manage Drupal site generally in the docker container#
 ###############################################################
 
-
-@task(alias='dr')
+@task()
 @roles('docker')
-def delete_root(role='docker'):
+def _delete_drupal_root(role='docker'):
     """
-    Delete existing Drupal installation
-    :param role Default 'role' where to run the task
+    Delete existing Drupal installation.
     """
     set_env(role)
     if fab_exists(role, DRUPAL_ROOT):
         if (INTERACTIVE_MODE or confirm(red('A Drupal installation is already present, do you really whish to remove '
                                             'it? (everything will be lost)'))) or not INTERACTIVE_MODE:
             fab_run(role, 'rm -rf {}'.format(DRUPAL_ROOT))
-            print green('Drupal installation deleted.')
-        else:
-            print(red('Drupal installation was not deleted.'))
+            print green('Drupal installation in {} successfully deleted.'.format(DRUPAL_ROOT))
     else:
-        print green('No Drupal installation is present, we can build a new one.')
+        print red('No Drupal installation was found in {}. Try fab make to build a new Drupal platform.'.format(DRUPAL_ROOT))
 
 
 @task(alias='make')
@@ -587,26 +576,11 @@ def drush_config(role='local'):
         #     fab_run(role, 'git clone git@gitlab.savoirfairelinux.com:drupal/drupalizer.git')
     print green('Drush configuration done.')
 
-
-@task(alias='csy')
+@task()
 @roles('docker')
-def create_symlinks(role='docker'):
+def _init_db(role='docker'):
     """
-    Create symlinks for the
-    :param role Default 'role' where to run the task
-    """
-    set_env(role)
-    fab_run(role, 'rm -rf {}'.format(DRUPAL_ROOT))
-    fab_run(role, 'ln -s {}/src/drupal {}'.format(WORKSPACE, DRUPAL_ROOT))
-    print green('Symlinks created')
-
-
-@task(alias='dbs')
-@roles('docker')
-def data_base_setup(role='docker'):
-    """
-    Setup database for site install
-    :param role Default 'role' where to run the task
+    Create a database and a user that can access it. 
     """
     set_env(role)
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
@@ -673,11 +647,11 @@ def set_permission(role='docker'):
     secure_settings(env)
 
 
-@task(alias='cb')
+@task()
 @roles('docker')
-def behat_config(role='docker', rewrite=True):
+def behat_init(role='docker', rewrite=True):
     """
-    Create and configure behat.yml
+    Create and configure the Behat configuration file.
     :param role Default 'role' where to run the task
     :param rewrite If the behat.yml file should be rewrited or not.
     """
@@ -688,10 +662,9 @@ def behat_config(role='docker', rewrite=True):
             fab_run(role, 'sed -i "s@%DRUPAL_ROOT@{}@g" behat.yml'.format(DRUPAL_ROOT))
             fab_run(role, 'sed -i "s@%URL@http://{}@g" behat.yml'.format(SITE_HOSTNAME))
             fab_run(role, 'echo "127.0.0.1  {}" >> /etc/hosts'.format(SITE_HOSTNAME))
-        print green('Behat configured.')
+        print green('Behat is now properly configured. The configuration file is {}/tests/behat/behat.yml'.format(WORKSPACE))
     else:
-        print green('behat.yml is already present.')
-
+        print green('{}/tests/behat/behat.yml is already created.'.format(WORKSPACE))
 
 @task(alias='ib')
 @roles('docker')
@@ -723,9 +696,9 @@ def run_behat(role='docker'):
     # In the container behat is installed globaly, so check before install it inside the tests directory
     if not fab_exists(role, '/usr/local/bin/behat') or not fab_exists(role, '../tests/behat/bin/behat'):
         install_behat()
-    # If the configuration file behat.yml doesn't exist, call behat_config before run the test.
+    # If the configuration file behat.yml doesn't exist, call behat_init before run the test.
     if not fab_exists(role, '{}/tests/behat/behat.yml'.format(WORKSPACE)):
-        behat_config()
+        behat_init()
     with fab_cd(role, '{}/tests/behat'.format(WORKSPACE)):
         fab_run(role, 'behat --format junit --format pretty --tags "~@wip&&~@disabled&&~@test" --colors')
         # To run behat with only one test for example, comment previous line
@@ -770,13 +743,13 @@ def site_update(role='docker'):
                    'Do you want to continue with the SITE UPDATE?')):
         with fab_cd(role, DRUPAL_ROOT):
             site_environment = fab_run(role, 'drush vget environment --format=string')
-            execute(git_pull_profile)
+            execute(_update_profile)
             execute(drush_make, action='update')
             copy_settings(role, site_environment)
             fab_run(role, 'drush updb -y')
             # execute(drush_config)
             drush_commands(role, POST_UPDATE)
-            execute(behat_config)
+            execute(behat_init)
         print green('Site updated successfully!')
     else:
         print green('Aborting site updated!')
@@ -788,8 +761,8 @@ def site_reinstall():
     Complete local re-installation process. To use generally inside the running container to reinstall the Drupal site.
     The same that run: $ fab dr gpp dmk si dcf cs es ss dc cb
     """
-    execute(delete_root)
-    execute(git_pull_profile)
+    execute(_delete_drupal_root)
+    execute(_update_profile)
     execute(drush_make)
     execute(site_install)
     execute(drush_config)
@@ -797,14 +770,14 @@ def site_reinstall():
     execute(edit_settings)
     execute(secure_settings)
     execute(drush_commands)
-    execute(behat_config)
+    execute(behat_init)
     print green('Site reinstalled with success!')
 
 
 @task(alias='tests')
 def run_tests():
     print green('Tests execution tasks is about to start')
-    execute(behat_config)
+    execute(behat_init)
     execute(run_behat)
     print green('Tests: Done!')
 
@@ -823,20 +796,20 @@ def local_setup():
     Complete local installation process, used generally when building the docker image for install and configure Drupal.
     The same that run: $ fab dr gcp cp_keys dmk icreate crun dkuh csy dbs si dcf cs es ss dc cb
     """
-    execute(git_clone_profile)
+    execute(_update_profile)
     execute(copy_ssh_keys)
     execute(docker_create_image)
     execute(docker_run_container)
     execute(docker_update_host)
-    execute(delete_root)
+    execute(_delete_drupal_root)
     execute(drush_make)
     execute(create_symlinks)
-    execute(data_base_setup)
+    execute(_init_db)
     execute(site_install)
     execute(drush_config)
     execute(copy_settings)
     execute(edit_settings)
     execute(secure_settings)
     execute(drush_commands)
-    execute(behat_config)
+    execute(behat_init)
     print green('Local setup finished with success!')

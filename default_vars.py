@@ -25,8 +25,7 @@ LOCAL_WORKSPACE = path.join(path.dirname(__file__), path.pardir)
 LOCAL_DRUPAL_ROOT = '{}/src/drupal'.format(LOCAL_WORKSPACE)
 
 # Variables to use inside the docker container
-DOCKER_WORKSPACE = "/opt/sfl_boilerplate"
-DOCKER_DRUPAL_ROOT = "/var/www/drupal"
+DOCKER_WORKSPACE = "/opt/sfl"
 DOCKER_PORT_TO_BIND = 8001
 
 # Database variables
@@ -46,6 +45,8 @@ SITE_HOSTNAME = 'local.boilerplate.sfl'
 
 # Projects variables
 PROJECT_NAME = 'sfl_boilerplate'
+
+# Installation profile
 PROFILE = {'sflinux':'git@gitlab.savoirfairelinux.com:drupal/sflinux.git'}
 PROFILE_MAKE_FILE = 'build/build-sflinux.make'
 
