@@ -785,7 +785,6 @@ def test():
 def make(task):
     execute(task)
 
-
 @task(alias='release')
 def release():
     print green('Generating release artefacts')
