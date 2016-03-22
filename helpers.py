@@ -188,6 +188,18 @@ def hook_execute(hook, role='docker'):
         with fab_cd(role, env.docker_site_root):
             fab_run(role, cmd)
 
+
+def _copy_public_ssh_keys(role='local'):
+    """
+    Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
+    :param role Default 'role' where to run the task
+    """
+    set_env(role)
+    with fab_cd(role, WORKSPACE):
+        fab_run(role, 'cp ~/.ssh/id_rsa.pub conf/')
+        print(green('Public SSH key copied successful'))
+
+
 def _update_profile(role='local'):
     """
     Update or clone the installation profile specified in the configuration file.

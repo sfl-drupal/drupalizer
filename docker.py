@@ -122,6 +122,7 @@ def image_create(role='local'):
         if '{}/drupal'.format(env.project_name) in docker_images():
             print(red('Docker image {}/drupal was found, you has already build this image'.format(env.project_name)))
         else:
+            h._copy_public_ssh_keys(role)
             h.fab_run(role, 'docker build -t {}/drupal .'.format(env.project_name))
             print(green('Docker image {}/drupal was build successful'.format(env.project_name)))
 
