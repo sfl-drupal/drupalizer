@@ -4,12 +4,15 @@
 
 *Drupalizer* is a Fabric script on top of Docker and tightly integrated with Drush and Drupal that provides the developer high-level tasks to manage the local development environment.
 
-TIP: Drupalizer is configured as a git submodule of the SFL Boilerplate project.
-
+TIP: Drupalizer is configured as a git submodule for every project that needs to use it.
 
 For a complete overview of all available commands, run:
 
  $ fab --list
+
+To get a more nested or tree-like view, pass the following option:
+
+ $ fab --list-format=nested --list
 
 ==== Top-level tasks
 
@@ -17,22 +20,21 @@ The top-levels tasks are larger tasks that include others. They are the most com
 
 * _Setup_ the Docker container, and _run_ a full Drupal installation:
 
- $ fab local_setup
- $ fab ls
-
-* _Configure_ and _run_ the Behat tests:
-
- $ fab tests
-
-TIP: The formatters used are _pretty_ and _junit_.
-
-* _Build_ the Drupal platform:
-
- $ fab make
+ $ fab init
 
 * _Run_ the Drupal installation
 
  $ fab install
+
+ * _Update_ the Drupal installation
+
+  $ fab update
+
+ * _Configure_ and _run_ the Behat tests:
+
+ $ fab test
+
+TIP: The formatters used are _pretty_ and _junit_.
 
 
 ==== Other common tasks
@@ -41,28 +43,23 @@ Some more atomic tasks supported by *Drupalizer* would be:
 
 * _Start/stop_ the Docker container:
 
- $ fab crun
- $ fab cstop
+ $ fab docker.container_start
+ $ fab docker.container_stop
+
+ * _Bash_ into the Docker container:
+
+  $ fab docker.connect
 
 * _Run_ the Behat tests (without configure):
 
- $ fab run_behat
- $ fab rb
+ $ fab behat.run
 
 * _Update_ the full codebase by running the top-level Makefile:
 
- $ fab site_update
- $ fab su
+ $ fab drush.make
 
 CAUTION: This command will wipe all the modifications made in the working directories.
 
-* _Update_ the full codebase by running the top-level Makefile, _flush_ the database and _run_ the Drupal installation process:
+* _Archive_ the full codebase and the database using drush archive_dump:
 
- $ fab site_reinstall
- $ fab sr
-
-CAUTION: This command will wipe all the modifications made in the working directories.
-
-* _Bash_ into the Docker container:
-
- $ fab connect
+ $ fab drush.archive_dump
