@@ -47,7 +47,7 @@ host_name = local("hostname", capture=True)
 
 # Set the env dict with the roles and the hosts
 env.roledefs['local'] = ["{}@{}".format(user_name, host_name)]
-env.roledefs['docker'] = ["root@{}".format(SITE_HOSTNAME)]
+env.roledefs['docker'] = ["root@{}".format(env.site_hostname)]
 
 # Flag to use for install the site with or without translations
 LOCALE = False
