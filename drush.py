@@ -43,7 +43,6 @@ def make(action='install'):
                                          'the site will be installed in English only'.format(action, env.site_root)))
         ) or not env.interactive_mode:
         drush_opts += "--translations=fr "
-        env.locale = True
 
     drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
     if env.interactive_mode:
