@@ -144,7 +144,9 @@ def container_start(role='local'):
                 global CONTAINER_IP
                 CONTAINER_IP = h.fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
                                              '{}_container'.format(env.project_name), capture=True)
-                h.fab_update_hosts(CONTAINER_IP, env.site_hostname)
+                if env.interactive_mode:
+                    h.fab_update_hosts(CONTAINER_IP, env.site_hostname)
+
                 print(green('Docker container {}_container was build successful. '
                             'To visit the Website open a web browser in http://{} or '
                             'http://localhost:{}.'.format(env.project_name, env.site_hostname, env.bind_port)))
@@ -164,7 +166,8 @@ def container_stop(role='local'):
     """
     with h.fab_cd(role, env.workspace):
         if '{}_container'.format(env.project_name) in docker_ps():
-            h.fab_remove_from_hosts(env.site_hostname)
+            if env.interactive_mode:
+                h.fab_remove_from_hosts(env.site_hostname)
             h.fab_run(role, 'docker stop {}_container'.format(env.project_name))
             print(green('Docker container {}_container was successful stopped'.format(env.project_name)))
         else:
@@ -180,7 +183,10 @@ def container_remove(role='local'):
     """
     with h.fab_cd(role, env.workspace):
         if '{}_container'.format(env.project_name) in docker_ps():
-            h.fab_remove_from_hosts(env.site_hostname)
+
+            if env.interactive_mode:
+                h.fab_remove_from_hosts(env.site_hostname)
+            
             h.fab_run(role, 'docker rm -f {}_container'.format(env.project_name))
             print(green('Docker container {}_container was successful removed'.format(env.project_name)))
         else:
