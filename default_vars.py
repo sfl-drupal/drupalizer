@@ -1,62 +1,43 @@
-#********************************
-# WARNING WARNING WARNING
-#********************************
-
-# YOU MUST NOT MODIFY THIS FILE!
-
-# If you need to override the values of the variables defined in this file you should
-# Copy and paste this file with the name local_vars.py and set your values there.
-
-# When you create a file local_vars.py and define the values there, the fabfile.py file will use
-# your values and not the values defined in this file.
-
-
-#********************************
-# END WARNING
-#********************************
-
 from os import path
 
-# The Apache user
-APACHE = 'www-data'
+from fabric.api import env
 
-# Variables to use at your local machine
-LOCAL_WORKSPACE = path.join(path.dirname(__file__), path.pardir)
-LOCAL_DRUPAL_ROOT = '{}/src/drupal'.format(LOCAL_WORKSPACE)
 
-# Variables to use inside the docker container
-DOCKER_WORKSPACE = "/opt/sfl"
-DOCKER_PORT_TO_BIND = 8001
+# Project settings
 
-# Database variables
-DB_USER = 'dev'
-DB_PASS = 'dev'
-DB_HOST = 'localhost'
-DB_NAME = 'sfl_boilerplate'
+env.project_name = ''
+env.workspace = path.join(path.dirname(__file__), path.pardir)
+env.interactive_mode = True
+env.locale = False
 
-# Site variables
-SITE_NAME = 'SFL Boilerplate'
-SITE_SUBDIR = 'default'
-SITE_PROFILE = 'sflinux'
-SITE_ADMIN_NAME = 'admin'
-SITE_ADMIN_PASS = 'admin'
-SITE_ENVIRONMENT = 'local'
-SITE_HOSTNAME = 'local.boilerplate.sfl'
 
-# Projects variables
-PROJECT_NAME = 'sfl_boilerplate'
+# Site
 
-# Installation profile
-PROFILE = {'sflinux':'git@gitlab.savoirfairelinux.com:drupal/sflinux.git'}
-PROFILE_MAKE_FILE = 'build/build-sflinux.make'
+env.site_root = '{}/src/drupal'.format(env.workspace)
+env.site_name = ''
+env.site_environment = 'local'
+env.site_profile = ''
+env.site_profile_repo = ''
+env.site_profile_makefile = ''
+env.site_db_user = 'dev'
+env.site_db_pass = 'dev'
+env.site_db_host = 'localhost'
+env.site_db_name = ''
+env.site_hostname = ''
+env.site_admin_user = 'admin'
+env.site_admin_pass = 'admin'
+env.site_subdir = 'default'
 
-# Drush commands to be run at the end of the installation process
-POST_INSTALL = ['drush d-conf', 'drush fra -y', 'drush po-import fr --custom-only', 'drush cc all']
-# Drush commands to be run at the end of the update process
-POST_UPDATE = ['drush d-conf', 'drush fra -y', 'drush po-import fr --custom-only', 'drush cc all']
 
-# Test variables
-TEST_DB_USER = 'testuser'
-TEST_DB_PASS = 'testuser'
-TEST_DB_NAME = 'sfl_boilerplate_tests'
-TEST_SITE_HOSTNAME = 'tests.local.boilerplate.sfl'
+# Docker
+
+env.docker_workspace = '/opt/sfl'
+env.docker_site_root = '{}/src/drupal'.format(env.docker_workspace)
+env.bind_port = 8001
+env.apache_user = 'www-data'
+
+
+# Hook commands
+
+env.hook_post_install = ['drush fra -y', 'drush cc all']
+env.hook_post_update = ['drush fra -y', 'drush cc all']
