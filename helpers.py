@@ -49,52 +49,9 @@ host_name = local("hostname", capture=True)
 env.roledefs['local'] = ["{}@{}".format(user_name, host_name)]
 env.roledefs['docker'] = ["root@{}".format(env.site_hostname)]
 
-# Flag to use for install the site with or without translations
-LOCALE = False
-
-# The CONTAINER_IP will be set at the creation of the container, see @task docker_run_container
-CONTAINER_IP = None
-
 env.builddir = path.join(env.workspace, 'build')
 env.makefile = '{}/{}/{}'.format(env.builddir, env.site_profile, env.site_profile_makefile)
 env.site_drush_aliases = path.join(env.site_root, 'sites/all/drush')
-
-def set_env(role):
-    """
-    Helper function to set the correct values of the global variables in function of the role
-    :param role: the role to use for define the host
-    :return:
-    """
-    global INTERACTIVE_MODE
-    INTERACTIVE_MODE = False if hasattr(env, 'mode') and env.mode == 'release' else True
-
-    global WORKSPACE
-    WORKSPACE = {
-        'local': LOCAL_WORKSPACE,
-        'docker': DOCKER_WORKSPACE
-    }[role]
-
-    global DRUPAL_ROOT
-    DRUPAL_ROOT = {
-        'local': LOCAL_DRUPAL_ROOT,
-        'docker': '{}/src/drupal'.format(DOCKER_WORKSPACE)
-    }[role]
-
-    global BUILDDIR
-    BUILDDIR = path.join(WORKSPACE, 'build')
-
-    global MAKEFILE
-    MAKEFILE = '{}/{}/{}'.format(BUILDDIR, PROFILE.keys()[0], PROFILE_MAKE_FILE)
-
-    global DRUSH_ALIASES
-    DRUSH_ALIASES = path.join(DRUPAL_ROOT, 'sites/all/drush')
-
-    global DOCKER_IFACE_IP
-    DOCKER_IFACE_IP = None
-    if CONTAINER_IP:
-        DOCKER_IFACE_IP = [(s.connect((CONTAINER_IP, 80)), s.getsockname()[0], s.close())
-                           for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
-
 
 def fab_run(role="local", cmd="", capture=False):
     """
@@ -190,14 +147,15 @@ def hook_execute(hook, role='docker'):
 
 
 def _copy_public_ssh_keys(role='local'):
+    
     """
     Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
     :param role Default 'role' where to run the task
     """
-    set_env(role)
-    with fab_cd(role, WORKSPACE):
+
+    with fab_cd(role, env.workspace):
         fab_run(role, 'cp ~/.ssh/id_rsa.pub conf/')
-        print(green('Public SSH key copied successful'))
+        print green('Public SSH key copied successful to {}/conf directory'.format(env.workspace))
 
 
 def _update_profile(role='local'):
@@ -217,16 +175,20 @@ def _update_profile(role='local'):
 
 @roles('docker')
 def _init_db(role='docker'):
+
     """
     Create a database and a user that can access it.
     """
 
-    set_env(role)
+    container_ip = fab_run('local', 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
+                                                 '{}_container'.format(env.project_name), capture=True)
+    docker_iface_ip = [(s.connect((container_ip, 80)), s.getsockname()[0], s.close())
+                                   for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
 
     fab_run(role, 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS {}; GRANT ALL PRIVILEGES ON {}.* TO '
                   '\'{}\'@\'localhost\' IDENTIFIED BY \'{}\'; GRANT ALL PRIVILEGES ON {}.* TO \'{}\'@\'{}\' '
                   'IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(env.site_db_name, env.site_db_name, env.site_db_user, env.site_db_pass,
-                                                                    env.site_db_name, env.site_db_user, DOCKER_IFACE_IP, env.site_db_user))
+                                                                    env.site_db_name, env.site_db_user, docker_iface_ip, env.site_db_user))
 
 
 
