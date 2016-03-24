@@ -147,9 +147,11 @@ def container_start(role='local'):
                 if env.interactive_mode:
                     h.fab_update_hosts(CONTAINER_IP, env.site_hostname)
 
-                print(green('Docker container {}_container was build successful. '
+                    print(green('Docker container {}_container was build successful. '
                             'To visit the Website open a web browser in http://{} or '
                             'http://localhost:{}.'.format(env.project_name, env.site_hostname, env.bind_port)))
+
+                h.fab_update_container_ip()
 
         else:
             print(red('Docker image {}/drupal not found and is a requirement to run the {}_container.'
@@ -213,4 +215,18 @@ def image_remove(role='local'):
         else:
             print(red('Docker image {}/drupal was not found'.format(env.project_name)))
 
+
+@task
+@roles('docker')
+def update_host():
+    """
+    Update hostname resolution in the container.
+    """
+
+    site_hostname = run("hostname")
+    run("sed  '/{}/c\{} {}  localhost.domainlocal' "
+            "/etc/hosts > /root/hosts.backup".format(env.container_ip, env.container_ip, site_hostname))
+    run("cat /root/hosts.backup > /etc/hosts")
+
+    h.fab_update_container_ip()
 

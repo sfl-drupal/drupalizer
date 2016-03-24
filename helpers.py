@@ -26,6 +26,8 @@ from fabric.contrib.files import exists
 # Import socket to find the localhost IP address
 import socket
 
+import os
+
 # Import datetime
 from datetime import datetime
 
@@ -47,7 +49,7 @@ host_name = local("hostname", capture=True)
 
 # Set the env dict with the roles and the hosts
 env.roledefs['local'] = ["{}@{}".format(user_name, host_name)]
-env.roledefs['docker'] = ["root@{}".format(env.site_hostname)]
+env.roledefs['docker'] = ["root@{}".format(env.container_ip)]
 
 env.builddir = path.join(env.workspace, 'build')
 env.makefile = '{}/{}/{}'.format(env.builddir, env.site_profile, env.site_profile_makefile)
@@ -119,6 +121,15 @@ def fab_remove_from_hosts(site_hostname):
     """
     print(green('Enter your password to remove the {} from your /etc/hosts file'.format(site_hostname)))
     local('sudo sed -i "/{}/d" /etc/hosts'.format(site_hostname))
+
+
+def fab_update_container_ip():
+    
+    container_ip = fab_run('local', 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
+                                             '{}_container'.format(env.project_name), capture=True)
+
+    local('sed -i "/env.container_ip/d" {}/local_vars.py'.format(os.path.dirname(os.path.abspath(__file__))))
+    local('sed -i "/# Docker auto-added container IP/a env.container_ip = \'{}\'" {}/local_vars.py'.format(''.join(container_ip), os.path.dirname(os.path.abspath(__file__))))
 
 
 def fab_update_hosts(ip, site_hostname):
