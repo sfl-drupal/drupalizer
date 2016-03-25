@@ -24,6 +24,8 @@ from fabric.colors import red, green
 # Import datetime
 from datetime import datetime
 
+import os.path
+
 import helpers as h
 
 @task(alias='make')
@@ -147,4 +149,19 @@ def archive_dump(role='docker'):
             'drush archive-dump --destination={}/{} --tar-options="--exclude=.git"'.format(env.builddir, platform)
         )
 
+@task
+@roles('local')
+def gen_doc(role='local'):
+    """
+    Generate README file
+    :param role Default 'role' where to run the task
+    """
+
+    if os.path.isfile('{}/README.adoc'.format(env.workspace)):
+        h.fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(env.workspace, env.workspace))
+        print(green('README.html generated in {}'.format(env.workspace)))
+        
+    if os.path.isfile('{}/CHANGELOG.adoc'.format(env.workspace)):
+        h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.workspace, env.workspace))
+        print(green('CHANGELOG.html generated in {}'.format(env.workspace)))
 

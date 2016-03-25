@@ -70,3 +70,4 @@ def release():
     """
     
     execute(drush.archive_dump)
+    execute(drush.gen_doc)
