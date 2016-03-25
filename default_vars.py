@@ -35,7 +35,9 @@ env.docker_workspace = '/opt/sfl'
 env.docker_site_root = '{}/src/drupal'.format(env.docker_workspace)
 env.bind_port = 8001
 env.apache_user = 'www-data'
-env.container_ip = '172.0.0.0'
+
+# Docker auto-added container IP
+env.container_ip = '172.17.0.0'
 
 
 # Hook commands
