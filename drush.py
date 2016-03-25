@@ -130,16 +130,14 @@ def site_install():
 
 
 @task
-@roles('docker')
-def archive_dump(role='docker'):
+@roles('local')
+def archive_dump(role='local'):
     """
     Archive the platform for release or deployment.
     :param role Default 'role' where to run the task
     """
 
-    role = 'docker'
-
-    with h.fab_cd(role, env.docker_site_root):
+    with h.fab_cd(role, env.site_root):
         platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
         print(green('Cleaning previous archives'))
         h.fab_run(role, 'rm -f {}/*.tar.gz'.format(env.builddir))
