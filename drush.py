@@ -163,3 +163,4 @@ def gen_doc(role='local'):
         h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.workspace, env.workspace))
         print(green('CHANGELOG.html generated in {}'.format(env.workspace)))
 
+

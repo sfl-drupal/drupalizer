@@ -2,6 +2,7 @@ from .deploy import *
 import drush
 import behat 
 import docker
+import core
 from .environments import e
 
 from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
