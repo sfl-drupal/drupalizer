@@ -123,13 +123,10 @@ def fab_remove_from_hosts(site_hostname):
     local('sudo sed -i "/{}/d" /etc/hosts'.format(site_hostname))
 
 
-def fab_update_container_ip():
-    
-    container_ip = fab_run('local', 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
-                                             '{}_container'.format(env.project_name), capture=True)
-    env.container_ip = container_ip
+def fab_update_container_ip(container_ip):
     local('sed -i "/env.container_ip/d" {}/local_vars.py'.format(os.path.dirname(os.path.abspath(__file__))))
-    local('sed -i "/# Docker auto-added container IP/a env.container_ip = \'{}\'" {}/local_vars.py'.format(''.join(container_ip), os.path.dirname(os.path.abspath(__file__))))
+    local('sed -i "/# Docker auto-added container IP/a env.container_ip = \'{}\'" '
+          '{}/local_vars.py'.format(''.join(container_ip), os.path.dirname(os.path.abspath(__file__))))
 
 
 def fab_update_hosts(ip, site_hostname):

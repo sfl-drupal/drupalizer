@@ -130,8 +130,8 @@ def site_install():
 
 
 @task
-@roles('local')
-def archive_dump(role='local'):
+@roles('docker')
+def archive_dump(role='docker'):
     """
     Archive the platform for release or deployment.
     :param role Default 'role' where to run the task

@@ -141,17 +141,16 @@ def container_start(role='local'):
                              '-d -p {}:80'.format(env.bind_port),
                              mounts=[(env.workspace, env.docker_workspace, True)]):
                 # If container was successful build, get the IP address and show it to the user.
-                global CONTAINER_IP
-                CONTAINER_IP = h.fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
+                env.container_ip = h.fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
                                              '{}_container'.format(env.project_name), capture=True)
                 if env.interactive_mode:
-                    h.fab_update_hosts(CONTAINER_IP, env.site_hostname)
+                    h.fab_update_hosts(env.container_ip, env.site_hostname)
 
                     print(green('Docker container {}_container was build successful. '
                             'To visit the Website open a web browser in http://{} or '
                             'http://localhost:{}.'.format(env.project_name, env.site_hostname, env.bind_port)))
 
-                h.fab_update_container_ip()
+                h.fab_update_container_ip(env.container_ip)
 
         else:
             print(red('Docker image {}/drupal not found and is a requirement to run the {}_container.'
