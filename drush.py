@@ -144,7 +144,8 @@ def archive_dump(role='docker'):
         print(green('Archiving the platform'))
         h.fab_run(
             role,
-            'drush archive-dump --destination={}/{} --tar-options="--exclude=.git"'.format(env.builddir, platform)
+            'drush archive-dump --destination={}/build/{} --tar-options="--exclude=.git"'.format(env.docker_workspace,
+                                                                                                 platform)
         )
 
 @task
