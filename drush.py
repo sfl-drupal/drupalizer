@@ -137,10 +137,10 @@ def archive_dump(role='docker'):
     :param role Default 'role' where to run the task
     """
 
-    with h.fab_cd(role, env.site_root):
+    with h.fab_cd(role, env.docker_site_root):
         platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
         print(green('Cleaning previous archives'))
-        h.fab_run(role, 'rm -f {}/*.tar.gz'.format(env.builddir))
+        h.fab_run(role, 'rm -f {}/build/*.tar.gz'.format(env.docker_workspace))
         print(green('Archiving the platform'))
         h.fab_run(
             role,
@@ -149,19 +149,21 @@ def archive_dump(role='docker'):
         )
 
 @task
-@roles('local')
-def gen_doc(role='local'):
+@roles('docker')
+def gen_doc(role='docker'):
     """
     Generate README file
     :param role Default 'role' where to run the task
     """
 
-    if os.path.isfile('{}/README.adoc'.format(env.workspace)):
-        h.fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(env.workspace, env.workspace))
-        print(green('README.html generated in {}'.format(env.workspace)))
-        
-    if os.path.isfile('{}/CHANGELOG.adoc'.format(env.workspace)):
-        h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.workspace, env.workspace))
-        print(green('CHANGELOG.html generated in {}'.format(env.workspace)))
+    if os.path.isfile('{}/README.adoc'.format(env.docker_workspace)):
+        h.fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(env.docker_workspace,
+                                                                                       env.docker_workspace))
+        print(green('README.html generated in {}'.format(env.docker_workspace)))
+
+    if os.path.isfile('{}/CHANGELOG.adoc'.format(env.docker_workspace)):
+        h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.docker_workspace,
+                                                                                             env.docker_workspace))
+        print(green('CHANGELOG.html generated in {}'.format(env.docker_workspace)))
 
 
