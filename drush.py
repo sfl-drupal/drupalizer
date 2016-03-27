@@ -27,6 +27,7 @@ from datetime import datetime
 import os.path
 
 import helpers as h
+import core as c
 
 @task(alias='make')
 @roles('local')
@@ -124,6 +125,10 @@ def site_install():
                                                                                         site_admin_name,
                                                                                         site_admin_pass,
                                                                                         site_subdir))
+        # Import db_dump if it exists.
+        if env.db_dump:
+            c.db_import()
+
     print green('Site installed successfully!')
 
     h.hook_execute('post_install', role)

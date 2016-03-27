@@ -7,8 +7,8 @@ import helpers as h
 import os.path
 
 @task
-@roles('local')
-def db_import(filename, role='local'):
+@roles('docker')
+def db_import(filename=env.db_dump, role='docker'):
     """Import and restore the specified database dump.
 
     $ fab core.db_import:/tmp/db_dump.sql.gz
