@@ -10,11 +10,15 @@ import os, glob
 @task
 @roles('local')
 def to_aegir(environement, build='0', role='local', migrate_sites=False, delete_old_platforms=False):
-    """Import and restore the specified database dump.
+    """Deploy the artifact to the aegir server.
 
-    $ fab core.db_import:/tmp/db_dump.sql.gz
+    $ fab deploy.to_aegir
 
-    :param filename: a full path to a gzipped sql dump.
+    :param environement: the environnement (dev, stage, production)
+    :param build: the number of the build in Jenkins
+    :param role: the role to run the task in fabric
+    :param migrate_sites: if aegir should migrate the sites to the new platform
+    :param delete_old_platforms: if aegir should remove old platforms
     """
     aegir_server = env.aegir_server
     aegir_user = env.aegir_user
@@ -89,6 +93,13 @@ def to_aegir(environement, build='0', role='local', migrate_sites=False, delete_
 @task
 @roles('local')
 def to_server(environement, role='local'):
+    """Deploy the artifact to the aegir server.
+
+        $ fab deploy.to_aegir
+
+        :param environement: the environnement (dev, stage, production)
+        :param role: the role to run the task in fabric
+    """
     build_dir = '{}/build'.format(env.workspace)
     os.chdir(build_dir)
     for artifact in glob.glob("*.tar.gz"):
