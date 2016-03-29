@@ -123,8 +123,10 @@ def site_install():
                                                                                         db_host, db_name, site_name,
                                                                                         site_admin_name,
                                                                                         site_admin_pass,
-        print green('Site installed successfully!')
                                                                                         site_subdir))
+
+        print green('Site installed successfully!')
+
         # Import db_dump if it exists.
         if 'db_dump' in env and env.db_dump is not False:
             h._db_import(env.db_dump)

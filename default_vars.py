@@ -29,6 +29,10 @@ env.site_admin_pass = 'admin'
 env.site_subdir = 'default'
 
 
+# Database dump
+# To enable it, replace the boolean value with the absolute path of a gzipped SQL dump file.
+env.db_dump = False
+
 # Docker
 
 env.docker_workspace = '/opt/sfl'
