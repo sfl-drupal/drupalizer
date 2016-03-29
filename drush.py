@@ -144,13 +144,12 @@ def archive_dump(role='docker'):
 
     with h.fab_cd(role, env.docker_site_root):
         platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
-        print(green('Cleaning previous archives'))
-        h.fab_run(role, 'rm -f {}/build/*.tar.gz'.format(env.docker_workspace))
-        print(green('Archiving the platform'))
+        h.fab_run(role, 'rm -f {}/*.tar.gz'.format(env.builddir))
+        print green('All tar.gz archives found in {} have been deleted.'.format(env.builddir))
+
         h.fab_run(
             role,
-            'drush archive-dump --destination={}/build/{} --tar-options="--exclude=.git"'.format(env.docker_workspace,
-                                                                                                 platform)
+            'drush archive-dump --destination={}/build/{} --tags="sflinux {}" --generatorversion="2.x" --generator="Drupalizer::fab drush.archive_dump" --tar-options="--exclude=.git"'.format(env.docker_workspace, platform, env.project_name)
         )
 
 @task
