@@ -27,7 +27,6 @@ from datetime import datetime
 import os.path
 
 import helpers as h
-import core as c
 
 @task(alias='make')
 @roles('local')
@@ -117,19 +116,19 @@ def site_install():
 
     with h.fab_cd(role, site_root):
         locale = '--locale="fr"' if env.locale else ''
-
+        
         h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
                       '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
                                                                                         db_user, db_pass,
                                                                                         db_host, db_name, site_name,
                                                                                         site_admin_name,
                                                                                         site_admin_pass,
+        print green('Site installed successfully!')
                                                                                         site_subdir))
         # Import db_dump if it exists.
-        if env.db_dump:
-            c.db_import()
+        if 'db_dump' in env and env.db_dump is not False:
+            h._db_import(env.db_dump)
 
-    print green('Site installed successfully!')
 
     h.hook_execute('post_install', role)
 

@@ -200,3 +200,15 @@ def _init_db(role='docker'):
 
 
 
+def _db_import(filename, role='local'):
+    """Import and restore the specified database dump.
+
+    :param filename: a full path to a gzipped sql dump.
+    """
+
+    if path.isfile(filename):
+        print green('Database dump {} found.'.format(filename))
+        fab_run(role, 'zcat {} | mysql -u{} -p{} -h{} {}'.format(filename, env.site_db_user, env.site_db_pass, env.container_ip, env.site_db_name))
+        print green('Database dump successfully restored.')
+    else:
+        print red('Could not find database dump at {}'.format(filename))
