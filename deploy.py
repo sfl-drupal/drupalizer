@@ -1,10 +1,28 @@
+# coding: utf-8
+#
+# Copyright (C) 2016 Savoir-faire Linux Inc. (<www.savoirfairelinux.com>).
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from __future__ import unicode_literals
 from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
 from fabric.contrib.project import rsync_project
 from fabric.colors import red, green
+from fabric.utils import abort
 
 import helpers as h
-import drush as d
 import os, glob
 
 @task
@@ -88,6 +106,142 @@ def to_aegir(environement, build='0', role='local', migrate_sites=False, delete_
 
     else:
         print red('There are not enought information to deploy the platformt')
+
+def set_hosts(environment):
+    
+    if environment not in env.aliases:
+        abort('Environment {} could not be found in the aliases definition.'.format(environment))
+    
+    alias = env.aliases.get(environment)
+
+    env.hosts = ['{}@{}'.format(alias.get('user'), alias.get('host'))]
+
+
+def is_aegir_deployment(environment):
+
+  alias = env.aliases.get(environment)
+  
+  return False if 'aegir' not in alias or alias.get('aegir') else True
+    
+
+def target_dir(environment):
+
+  alias = env.aliases.get(environment)
+  
+  if not is_aegir_deployment(environment):
+      return alias.get('root')
+
+  else:
+      platform = alias.get('aegir_platform')
+      return platform.format(name=env.project_name, env=environment, build=env.build_number)
+      
+
+@task
+def provision(environment, role='local'):
+    """Provision a Jenkins deployment.
+    """
+    os.chdir(env.builddir)
+
+    set_hosts(environment)
+
+    if environment not in env.aliases:
+        abort('Environment {} could not be found in the aliases definition.'.format(environment))
+    
+    alias = env.aliases.get(environment)
+
+    print env.roledefs
+
+    artefact = 'sfl_boilerplate-20160329_205114.tar.gz'
+    
+    with h.fab_cd(role, '{}/src'.format(env.workspace)):
+
+        # Clear the currently installed platform
+        if h.fab_exists(role, env.site_root):
+            h.fab_run(role, 'rm -rf {}'.format(env.site_root))
+
+
+        # Extract the platform to deploy
+        h.fab_run(role, 'tar -xzf {}/{}'.format(env.builddir, artefact))
+  
+        if not h.fab_exists(role, '{}/src/drupal'.format(env.workspace)):
+            abort('The archive to deploy does not contain a drupal directory.')
+
+        if not os.path.isfile('{}/src/drupal/cron.php'.format(env.workspace)):
+            abort('The archive to deploy does not seem to contain a valid Drupal installation.')
+
+        print green('The platform {} is now ready to be deployed to the target environment {}.'.format(artefact, environment))
+
+
+
+@task
+def pwd():
+    run('pwd')
+
+@task
+def push(environment, role='local'):
+    """Push the platform to the target environment.
+
+        :param environment: The target environment. It must match a valid Drush alias.
+    """
+
+    if environment not in env.roledefs:
+        abort('Environment {} could not be found in the aliases definition.'.format(environment))
+
+    target = env.aliases.get(environment)
+  
+    # Push platform
+    platform = target_dir(environment)
+  
+    print green('{}'.format(platform))
+
+    local('rsync -a src/drupal/ {}@{}:{}/{}'.format(target.get('user'), target.get('host'), target.get('root'), platform))
+
+    if is_aegir_deployment(environment):
+        # execute(_aegir_provision_platform, platform, target.get('aegir_path'), target.get('aegir_destsrv'), hosts=env.hosts))
+        _aegir_provision_platform(platform, target.get('aegir_path'), target.get('aegir_destsrv'))        
+
+
+def _aegir_provision_platform(platform, aegir_path, aegir_destsrv):
+    # Provision the platform on Aegir
+    run('drush --root="{}/platforms/{}" provision-save "@platform_{}" --context_type="platform" --web_server=@{}'.format(aegir_path, platform, platform, aegir_destsrv))
+    run('drush @hostmaster hosting-import platform_{}'.format(platform))
+    run('drush @hostmaster hosting-dispatch')
+
+
+def _aegir_migrate_sites(environment, platform):
+    run('{}/migrate-sites {} {}'.format(environment, platform))
+
+@task
+@roles('local')
+def migrate(environment, role='local'):
+    """Migrate the Drupal database on the target environment.
+
+        :param environment: The target environment. It must match a valid Drush alias.
+    """ 
+
+    if is_aegir_deployment(environment) and env.migrate is True:
+        platform = target_dir(environment)
+        _aegir_migrate_sites(environment, platform)
+
+
+        # Run the updatedb script
+        # with h.fab_cd(role, env.site_root):
+        # Run the Drupal update script
+#        h.fab_run(
+    #        role,
+    #        'drush --yes @{} updatedb'
+    #          .format(environment)
+    #    )
+  #      print green('The target environment {} is up-to-date.'.format(environment))
+#
+        
+        # Clear caches
+ #       h.fab_run(
+   #       role,
+    #      'drush --yes @{} cache-clear all'
+    #        .format(environment)
+     #   )
+   #     print green('The caches have been cleared on the target environment {}.'.format(environment))
 
 
 @task

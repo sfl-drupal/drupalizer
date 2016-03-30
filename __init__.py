@@ -1,8 +1,7 @@
-from .deploy import *
+import docker
+from deploy  import *
 import drush
 import behat 
-import docker
-import core
 from .environments import e
 
 from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
@@ -72,3 +71,14 @@ def release():
     
     execute(drush.archive_dump)
     execute(drush.gen_doc)
+
+
+@task
+def deploy(environment):
+    """Deploy code and run database updates on a target Drupal environment.
+    """
+
+    execute(provision, environment)
+    execute(push, environment, host=env.hosts)
+    execute(migrate, environment, host=env.hosts)
+
