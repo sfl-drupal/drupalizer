@@ -107,62 +107,68 @@ def to_aegir(environement, build='0', role='local', migrate_sites=False, delete_
     else:
         print red('There are not enought information to deploy the platformt')
 
+
 def set_hosts(environment):
-    
+    """
+    Set the hosts Fabric environment variable with the target environment.
+    This is the host that will be used to run SSH commands on.
+    """
     if environment not in env.aliases:
         abort('Environment {} could not be found in the aliases definition.'.format(environment))
-    
-    alias = env.aliases.get(environment)
 
-    env.hosts = ['{}@{}'.format(alias.get('user'), alias.get('host'))]
+    target = env.aliases.get(environment)
+    env.hosts = ['{}@{}'.format(target.get('user'), target.get('host'))]
 
 
-def is_aegir_deployment(environment):
+def is_aegir_deployment(target):
+  """Check if the target environment is an Aegir server."""
+  return False if 'aegir' not in target or target.get('aegir') is False else True
 
-  alias = env.aliases.get(environment)
-  
-  return False if 'aegir' not in alias or alias.get('aegir') else True
-    
+
+def _aegir_platform_name(target, environment):
+  """Build the platform needed by Aegir, from the placeholder in configuration file.
+  """
+  if 'aegir_platform' not in target:
+    abort('Aegir needs a unique platform name to function properly. Check your aegir_platform key in your aliases.')
+  aegir_platform = target.get('aegir_platform')
+  return aegir_platform.format(name=env.project_name, env=environment, build=env.build_number)
+
 
 def target_dir(environment):
+  target = env.aliases.get(environment)
+  return target.get('root') + _aegir_platform_name(target, environment) if is_aegir_deployment(target) else target.get('root')
 
-  alias = env.aliases.get(environment)
-  
-  if not is_aegir_deployment(environment):
-      return alias.get('root')
 
-  else:
-      platform = alias.get('aegir_platform')
-      return platform.format(name=env.project_name, env=environment, build=env.build_number)
-      
+def get_archive_from_dir(directory):
+  """List tarball archives in a directory.
+  """
+  files = glob.glob1(directory, '*.tar.gz')
+  if len(files) == 0:
+    abort('No tarball found in {}'.format(directory))
+  if len(files) > 1:
+    abort('More than one tarball has been found in {}. Can not decide which one to deploy.'.format(directory))
+  return files[0]
+
 
 @task
 def provision(environment, role='local'):
     """Provision a Jenkins deployment.
-    """
-    os.chdir(env.builddir)
 
+    This task loads the target environment and extract the archive to deploy.
+    """
     set_hosts(environment)
 
-    if environment not in env.aliases:
-        abort('Environment {} could not be found in the aliases definition.'.format(environment))
-    
-    alias = env.aliases.get(environment)
+    artefact = get_archive_from_dir(env.builddir)
 
-    print env.roledefs
-
-    artefact = 'sfl_boilerplate-20160329_205114.tar.gz'
-    
     with h.fab_cd(role, '{}/src'.format(env.workspace)):
 
         # Clear the currently installed platform
         if h.fab_exists(role, env.site_root):
             h.fab_run(role, 'rm -rf {}'.format(env.site_root))
-
-
         # Extract the platform to deploy
         h.fab_run(role, 'tar -xzf {}/{}'.format(env.builddir, artefact))
-  
+
+        # Fast-check if the archive looks like a Drupal installation
         if not h.fab_exists(role, '{}/src/drupal'.format(env.workspace)):
             abort('The archive to deploy does not contain a drupal directory.')
 
@@ -174,31 +180,19 @@ def provision(environment, role='local'):
 
 
 @task
-def pwd():
-    run('pwd')
-
-@task
 def push(environment, role='local'):
     """Push the platform to the target environment.
 
         :param environment: The target environment. It must match a valid Drush alias.
     """
-
-    if environment not in env.roledefs:
-        abort('Environment {} could not be found in the aliases definition.'.format(environment))
-
     target = env.aliases.get(environment)
-  
-    # Push platform
-    platform = target_dir(environment)
-  
-    print green('{}'.format(platform))
+    target_directory = target_dir(environment)
 
-    local('rsync -a src/drupal/ {}@{}:{}/{}'.format(target.get('user'), target.get('host'), target.get('root'), platform))
+    local('rsync -a src/drupal/ {}@{}:{}'.format(target.get('user'), target.get('host'), target_directory))
 
-    if is_aegir_deployment(environment):
-        # execute(_aegir_provision_platform, platform, target.get('aegir_path'), target.get('aegir_destsrv'), hosts=env.hosts))
-        _aegir_provision_platform(platform, target.get('aegir_path'), target.get('aegir_destsrv'))        
+    if is_aegir_deployment(target):
+        platform = _aegir_platform_name(target, environment)
+        _aegir_provision_platform(platform, target.get('aegir_path'), target.get('aegir_destsrv'))
 
 
 def _aegir_provision_platform(platform, aegir_path, aegir_destsrv):
@@ -217,10 +211,10 @@ def migrate(environment, role='local'):
     """Migrate the Drupal database on the target environment.
 
         :param environment: The target environment. It must match a valid Drush alias.
-    """ 
-
-    if is_aegir_deployment(environment) and env.migrate is True:
-        platform = target_dir(environment)
+    """
+    target = env.aliases.get(environment)
+    if is_aegir_deployment(target) and env.migrate is True:
+        platform = _aegir_platform_name(target, environment)
         _aegir_migrate_sites(environment, platform)
 
 
@@ -234,7 +228,7 @@ def migrate(environment, role='local'):
     #    )
   #      print green('The target environment {} is up-to-date.'.format(environment))
 #
-        
+
         # Clear caches
  #       h.fab_run(
    #       role,
@@ -307,4 +301,3 @@ def to_server(environement, role='local'):
         h.fab_run(role, 'rm -rf {}'.format(env.site_root))
         h.fab_run(role, 'rm -rf {}/build/{}'.format(env.workspace, artifact))
         print green('Deployment in {} finished'.format(environement))
-
