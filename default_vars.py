@@ -50,9 +50,6 @@ env.hook_post_install = ['drush fra -y', 'drush cc all']
 env.hook_post_update = ['drush fra -y', 'drush cc all']
 
 
-# Aegir
+# Target environments definition
 
-env.aegir_server = 'local.aegir.sfl'
-env.aegir_user = 'aegir'
-env.aegir_path = '/var/aegir'
-env.aegir_dest_server = 'server_master'
+env.aliases = {}
