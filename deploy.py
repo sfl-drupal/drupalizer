@@ -213,7 +213,7 @@ def migrate(environment, role='local'):
         :param environment: The target environment. It must match a valid Drush alias.
     """
     target = env.aliases.get(environment)
-    if is_aegir_deployment(target) and env.migrate is True:
+    if is_aegir_deployment(target) and env.migrate == "true":
         platform = _aegir_platform_name(target, environment)
         _aegir_migrate_sites(environment, platform)
 
