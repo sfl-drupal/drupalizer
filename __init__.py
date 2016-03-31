@@ -1,7 +1,7 @@
 import docker
 from deploy  import *
 import drush
-import behat 
+import behat
 from .environments import e
 
 from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
@@ -19,7 +19,7 @@ def init():
     execute(drush.make, 'install')
     execute(drush.site_install)
     execute(drush.aliases)
-    execute(behat.init)  
+    execute(behat.init)
 
 
 
@@ -47,7 +47,7 @@ def install():
     execute(drush.make, 'install')
     execute(drush.site_install)
     execute(behat.init)
-  
+
 
 
 @task
@@ -60,7 +60,7 @@ def update():
     execute(drush.make, 'update')
     execute(drush.updatedb)
     execute(behat.init)
-  
+
 
 @task
 def release():
@@ -68,7 +68,7 @@ def release():
     """
     Generate all artefacts related to a release process or a deployment process.
     """
-    
+
     execute(drush.archive_dump)
     execute(drush.gen_doc)
 
@@ -79,6 +79,5 @@ def deploy(environment):
     """
 
     execute(provision, environment)
-    execute(push, environment, host=env.hosts)
-    execute(migrate, environment, host=env.hosts)
-
+    execute(push, environment, hosts=env.hosts)
+    execute(migrate, environment, hosts=env.hosts)
