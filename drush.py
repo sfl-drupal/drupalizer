@@ -145,8 +145,8 @@ def archive_dump(role='docker'):
 
     with h.fab_cd(role, env.docker_site_root):
         platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
-        h.fab_run(role, 'rm -f {}/*.tar.gz'.format(env.builddir))
-        print green('All tar.gz archives found in {} have been deleted.'.format(env.builddir))
+        h.fab_run(role, 'rm -f {}/build/*.tar.gz'.format(env.docker_workspace))
+        print green('All tar.gz archives found in {}/build have been deleted.'.format(env.docker_workspace))
 
         h.fab_run(
             role,
