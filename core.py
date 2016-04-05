@@ -1,14 +1,12 @@
 from __future__ import unicode_literals
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
-from fabric.contrib.console import confirm
+from fabric.api import task, roles, env
 from fabric.colors import red, green
 
 import helpers as h
-import os.path
 
 @task
 @roles('docker')
-def db_import(filename=env.db_dump, role='docker'):
+def db_import(filename, role='docker'):
     """Import and restore the specified database dump.
 
     $ fab core.db_import:/tmp/db_dump.sql.gz
@@ -16,10 +14,9 @@ def db_import(filename=env.db_dump, role='docker'):
     :param filename: a full path to a gzipped sql dump.
     """
 
-    if os.path.isfile(filename):
+    if h.fab_exists(role, filename):
         print green('Database dump {} found.'.format(filename))
-        with h.fab_cd(role, env.site_root):
-            h.fab_run(role, 'zcat {} | mysql -u{} -p{} -h{} {}'.format(filename, env.site_db_user, env.site_db_pass, env.container_ip, env.site_db_name))
-            print(green('Database dump successfully restored.'))
+        h.fab_run(role, 'zcat {} | mysql -u{} -p{} {}'.format(filename, env.site_db_user, env.site_db_pass, env.site_db_name))
+        print green('Database dump successfully restored.')
     else:
         print red('Could not find database dump at {}'.format(filename))

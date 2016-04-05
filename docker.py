@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
-from fabric.contrib.console import confirm
+from fabric.api import task, roles, env, local, run
 from fabric.colors import red, green
 
 import helpers as h
@@ -93,7 +92,6 @@ def docker_images():
     return [line.strip().split(' ')[0] for line in lines]
 
 
-
 @task
 @roles('local')
 def connect(role='local'):
@@ -122,7 +120,7 @@ def image_create(role='local'):
         if '{}/drupal'.format(env.project_name) in docker_images():
             print(red('Docker image {}/drupal was found, you has already build this image'.format(env.project_name)))
         else:
-            h._copy_public_ssh_keys(role)
+            h.copy_public_ssh_keys(role)
             h.fab_run(role, 'docker build -t {}/drupal .'.format(env.project_name))
             print(green('Docker image {}/drupal was build successful'.format(env.project_name)))
 
@@ -147,8 +145,8 @@ def container_start(role='local'):
                     h.fab_update_hosts(env.container_ip, env.site_hostname)
 
                     print(green('Docker container {}_container was build successful. '
-                            'To visit the Website open a web browser in http://{} or '
-                            'http://localhost:{}.'.format(env.project_name, env.site_hostname, env.bind_port)))
+                                'To visit the Website open a web browser in http://{} or '
+                                'http://localhost:{}.'.format(env.project_name, env.site_hostname, env.bind_port)))
 
                 h.fab_update_container_ip(env.container_ip)
 
@@ -204,7 +202,8 @@ def image_remove(role='local'):
     with h.fab_cd(role, env.workspace):
         if docker_isrunning('{}_container'.format(env.project_name)):
             print(red('Docker container {}_container is running, '
-                      'you should stopped it after remove the image {}/drupal'.format(env.project_name, env.project_name)))
+                      'you should stopped it after remove the image {}/drupal'.format(env.project_name,
+                                                                                      env.project_name)))
         if '{}/drupal'.format(env.project_name) in docker_images():
             h.fab_run(role, 'docker rmi -f {}/drupal'.format(env.project_name))
             # Remove dangling docker images to free space.
@@ -224,8 +223,7 @@ def update_host():
 
     site_hostname = run("hostname")
     run("sed  '/{}/c\{} {}  localhost.domainlocal' "
-            "/etc/hosts > /root/hosts.backup".format(env.container_ip, env.container_ip, site_hostname))
+        "/etc/hosts > /root/hosts.backup".format(env.container_ip, env.container_ip, site_hostname))
     run("cat /root/hosts.backup > /etc/hosts")
 
     h.fab_update_container_ip()
-

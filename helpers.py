@@ -18,8 +18,8 @@
 
 from __future__ import unicode_literals
 from getpass import getuser
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
-from fabric.colors import red, green
+from fabric.api import lcd, cd, roles, local, run
+from fabric.colors import green
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 
@@ -154,7 +154,7 @@ def hook_execute(hook, role='docker'):
             fab_run(role, cmd)
 
 
-def _copy_public_ssh_keys(role='local'):
+def copy_public_ssh_keys(role='local'):
     
     """
     Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
@@ -166,7 +166,7 @@ def _copy_public_ssh_keys(role='local'):
         print green('Public SSH key copied successful to {}/conf directory'.format(env.workspace))
 
 
-def _update_profile(role='local'):
+def update_profile(role='local'):
     """
     Update or clone the installation profile specified in the configuration file.
     The build file included will be used to build the application.
@@ -182,7 +182,7 @@ def _update_profile(role='local'):
 
 
 @roles('docker')
-def _init_db(role='docker'):
+def init_db(role='docker'):
 
     """
     Create a database and a user that can access it.
@@ -197,18 +197,3 @@ def _init_db(role='docker'):
                   '\'{}\'@\'localhost\' IDENTIFIED BY \'{}\'; GRANT ALL PRIVILEGES ON {}.* TO \'{}\'@\'{}\' '
                   'IDENTIFIED BY \'{}\'; FLUSH PRIVILEGES;"'.format(env.site_db_name, env.site_db_name, env.site_db_user, env.site_db_pass,
                                                                     env.site_db_name, env.site_db_user, docker_iface_ip, env.site_db_user))
-
-
-
-def _db_import(filename, role='local'):
-    """Import and restore the specified database dump.
-
-    :param filename: a full path to a gzipped sql dump.
-    """
-
-    if path.isfile(filename):
-        print green('Database dump {} found.'.format(filename))
-        fab_run(role, 'zcat {} | mysql -u{} -p{} -h{} {}'.format(filename, env.site_db_user, env.site_db_pass, env.container_ip, env.site_db_name))
-        print green('Database dump successfully restored.')
-    else:
-        print red('Could not find database dump at {}'.format(filename))
