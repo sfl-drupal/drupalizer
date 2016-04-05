@@ -17,8 +17,7 @@
 #
 
 from __future__ import unicode_literals
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
-from fabric.contrib.project import rsync_project
+from fabric.api import task, roles, env, local, run
 from fabric.colors import red, green
 from fabric.utils import abort
 

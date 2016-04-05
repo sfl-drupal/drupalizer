@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
-from fabric.contrib.console import confirm
-from fabric.colors import red, green
+from fabric.api import task, roles, env
+from fabric.colors import green
 
 import helpers as h
 

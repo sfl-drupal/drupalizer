@@ -4,7 +4,7 @@ import drush
 import behat
 from .environments import e
 
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
+from fabric.api import task, env, execute
 
 import helpers as h
 
@@ -17,9 +17,9 @@ def init():
     execute(docker.image_create)
     execute(docker.container_start)
     execute(drush.make, 'install')
-    execute(drush.site_install)
+    execute(drush.site_install, host='root@{}'.format(env.container_ip))
     execute(drush.aliases)
-    execute(behat.init)
+    execute(behat.init, host='root@{}'.format(env.container_ip))
 
 
 

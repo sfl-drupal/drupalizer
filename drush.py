@@ -17,7 +17,7 @@
 #
 
 from __future__ import unicode_literals
-from fabric.api import lcd, cd, task, roles, env, local, run, runs_once, execute
+from fabric.api import task, roles, env
 from fabric.contrib.console import confirm
 from fabric.colors import red, green
 
@@ -27,32 +27,35 @@ from datetime import datetime
 import os.path
 
 import helpers as h
+import core as c
+
 
 @task(alias='make')
 @roles('local')
 def make(action='install'):
-
     """
     Build the platform by running the Makefile specified in the local_vars.py configuration file.
     """
 
-    # Update profile codebase
-    h._update_profile()
-
     drush_opts = "--prepare-install " if action != 'update' else ''
 
-    if (env.interactive_mode and confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
-                                         'the site will be installed in English only'.format(action, env.site_root)))
-        ) or not env.interactive_mode:
+    # Update profile codebase
+    if env.site_profile and env.site_profile != '':
+        drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
+        h.update_profile()
+
+    if not env.interactive_mode:
+        drush_opts += "--translations=fr "
+    elif confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
+                     'the site will be installed in English only'.format(action, env.site_root))):
         drush_opts += "--translations=fr "
 
-    drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
     if env.interactive_mode:
         drush_opts += " --working-copy --no-gitinfofile"
     if not h.fab_exists('local', env.site_root):
         h.fab_run('local', "mkdir {}".format(env.site_root))
     with h.fab_cd('local', env.site_root):
-      h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
+        h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
 
 
 @task
@@ -63,18 +66,18 @@ def aliases():
     """
 
     role = 'local'
-    aliases = env.site_drush_aliases
+    drush_aliases = env.site_drush_aliases
     workspace = env.workspace
 
-    if not h.fab_exists(role, aliases):
-        h.fab_run(role, 'mkdir {}'.format(aliases))
-    with h.fab_cd(role, aliases):
+    if not h.fab_exists(role, drush_aliases):
+        h.fab_run(role, 'mkdir {}'.format(drush_aliases))
+    with h.fab_cd(role, drush_aliases):
         # Create aliases
-        if h.fab_exists(role, '{}/aliases.drushrc.php'.format(aliases)):
+        if h.fab_exists(role, '{}/aliases.drushrc.php'.format(drush_aliases)):
             h.fab_run(role, 'rm aliases.drushrc.php')
         h.fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(workspace))
 
-    print green('Drush aliases have been copied to {} directory.'.format(aliases))
+    print green('Drush aliases have been copied to {} directory.'.format(drush_aliases))
 
 
 @task
@@ -87,13 +90,12 @@ def updatedb():
     role = 'docker'
 
     with h.fab_cd(role, env.docker_site_root):
-      h.fab_run(role, 'drush updatedb -y')
+        h.fab_run(role, 'drush updatedb -y')
 
 
 @task
 @roles('docker')
 def site_install():
-
     """
     Run the site installation procedure.
     """
@@ -112,25 +114,24 @@ def site_install():
     site_subdir = env.site_subdir
 
     # Create first the database if necessary
-    h._init_db('docker')
+    h.init_db('docker')
 
     with h.fab_cd(role, site_root):
         locale = '--locale="fr"' if env.locale else ''
-        
+
         h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
-                      '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
-                                                                                        db_user, db_pass,
-                                                                                        db_host, db_name, site_name,
-                                                                                        site_admin_name,
-                                                                                        site_admin_pass,
-                                                                                        site_subdir))
+                        '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
+                                                                                          db_user, db_pass,
+                                                                                          db_host, db_name, site_name,
+                                                                                          site_admin_name,
+                                                                                          site_admin_pass,
+                                                                                          site_subdir))
 
         print green('Site installed successfully!')
 
         # Import db_dump if it exists.
         if 'db_dump' in env and env.db_dump is not False:
-            h._db_import(env.db_dump)
-
+            c.db_import(env.db_dump, role)
 
     h.hook_execute('post_install', role)
 
@@ -150,8 +151,11 @@ def archive_dump(role='docker'):
 
         h.fab_run(
             role,
-            'drush archive-dump --destination={}/build/{} --tags="sflinux {}" --generatorversion="2.x" --generator="Drupalizer::fab drush.archive_dump" --tar-options="--exclude=.git"'.format(env.docker_workspace, platform, env.project_name)
+            'drush archive-dump --destination={}/build/{} --tags="sflinux {}" --generatorversion="2.x" '
+            '--generator="Drupalizer::fab drush.archive_dump" --tar-options="--exclude=.git"'
+            ''.format(env.docker_workspace, platform, env.project_name)
         )
+
 
 @task
 @roles('docker')
@@ -170,5 +174,3 @@ def gen_doc(role='docker'):
         h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.docker_workspace,
                                                                                              env.docker_workspace))
         print(green('CHANGELOG.html generated in {}'.format(env.docker_workspace)))
-
-
