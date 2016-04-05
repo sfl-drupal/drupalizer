@@ -17,9 +17,9 @@ def init():
     execute(docker.image_create)
     execute(docker.container_start)
     execute(drush.make, 'install')
-    execute(drush.site_install, host=env.container_ip)
+    execute(drush.site_install, host='root@{}'.format(env.container_ip))
     execute(drush.aliases)
-    execute(behat.init, host=env.container_ip)
+    execute(behat.init, host='root@{}'.format(env.container_ip))
 
 
 
