@@ -1,10 +1,125 @@
 // This document is included in every project that submodules it.
+= README
 
-=== Drupalizer tasks
+= Configuration
+
+The file `default_vars.py` contains the default configuration.
+
+CAUTION: You should not edit this file directly.
+
+Instead, copy the file in a file named `local_vars.py`.
+
+  $ cp default_vars.py local_vars.py
+
+The configuration specified in this new file will be loaded by Drupalizer and will override the default configuration.
+
+== Section
+
+The configuration parameters are grouped in section, to ease maintenance and readability.
+All those variables are loaded as Fabric environment variables.
+
+=== Project settings
+
+Those are global project parameters mandatory to Drupalizer.
+
+|===
+|Parameters |Description
+
+|_project_name_
+|Machine-name of the project.
+
+|_workspace_
+|Project root directory.
+
+|_interactive_mode_
+|If False, no prompt. Useful for Jenkins.
+
+|_locale_
+|If True, install the site in French.
+
+|===
+
+=== Site settings
+
+|===
+|Parameters |Description
+
+|_site_root_
+|Drupal root. Usually _src/drupal_.
+
+|_site_name_
+|Drupal site name. Set during installation.
+
+|_site_environment_
+|Default: _local_.
+
+|_site_profile_
+|The installation profile, if any.
+
+|_site_profile_repo_
+|The installation profile git repository, if applicable.
+
+|_site_profile_makefile_
+|The Drush Makefile to run to build the platform.
+
+|_site_db_user_
+|The database user name. Default: _dev_.
+
+|_site_db_pass_
+|The database password. Default: _dev_.
+
+|_site_db_host_
+|The database hostname. Default: _localhost_
+
+|_site_db_name_
+| The database name
+
+|_site_hostname_
+|The site hostname (Optional).
+
+|_site_admin_user_
+|The Drupal administrator user name. Default: _admin_.
+
+|_site_admin_pass_
+|The Drupal administrator password. Default: _admin_.
+
+|_site_subdir_
+|The Drupal site directory (only for multisite). Default: _default_.
+
+|===
+
+=== Docker-related settings
+
+|===
+|Parameters |Description
+
+|_docker_workspace_
+|The Docker workspace. Default: _/opt/sfl_
+
+|_docker_site_root_
+|Drupal root in the Docker container. Default: _/opt/sfl/src/drupal_.
+
+|bind_port
+|The Docker port. Default: _8001_.
+
+|_apache_user_
+|The user running Apache in the Docker container. Default: _www-data_.
+
+|_container_ip_
+|Docker auto-added container IP. **Do not edit**.
+
+|===
+
+=== Target environments settings
+
+TODO
+
+
+= Fabric tasks
 
 *Drupalizer* is a Fabric script on top of Docker and tightly integrated with Drush and Drupal that provides the developer high-level tasks to manage the local development environment.
 
-TIP: Drupalizer is configured as a git submodule for every project that needs to use it.
+TIP: Drupalizer should be configured as a git submodule for every project that needs to use it.
 
 For a complete overview of all available commands, run:
 
@@ -14,7 +129,7 @@ To get a more nested or tree-like view, pass the following option:
 
  $ fab --list-format=nested --list
 
-==== Top-level tasks
+== Top-level tasks
 
 The top-levels tasks are larger tasks that include others. They are the most commonly called tasks.
 
@@ -26,9 +141,14 @@ The top-levels tasks are larger tasks that include others. They are the most com
 
  $ fab install
 
- * _Update_ the Drupal installation
+CAUTION: This command will wipe all the modifications made in the working directories.
+
+* _Update_ the Drupal installation
 
   $ fab update
+
+CAUTION: This command may wipe the modifications made in the working directories.
+
 
  * _Configure_ and _run_ the Behat tests:
 
@@ -37,7 +157,7 @@ The top-levels tasks are larger tasks that include others. They are the most com
 TIP: The formatters used are _pretty_ and _junit_.
 
 
-==== Other common tasks
+== Other common tasks
 
 Some more atomic tasks supported by *Drupalizer* would be:
 
