@@ -1,0 +1,64 @@
+= Installation
+SFL Drupal Team <drupal@lists.savoirfairelinux.net>
+v2.0.0, 2016-04-05
+:toc:
+// Refs
+:doc-docker: https://www.docker.com/
+:doc-fabric: http://www.fabfile.org/
+:doc-docker-installation: https://docs.docker.com/engine/installation/
+:doc-docker-baseimage: https://hub.docker.com/r/savoirfairelinux/lampd/
+:doc-drush: http://docs.drush.org/en/master/
+:doc-asciidoctor: http://asciidoctor.org/docs/asciidoc-recommended-practices/
+
+== System Requirements
+
+Drupalizer has been designed to work with Drupal 7
+and therefore can not work as a standalone application.
+
+TIP: Whenever it is possible, you should use *Composer* to install and manage the PHP dependencies.
+
+The following dependencies need to be installed:
+
+* {doc-docker}[Docker]
+* {doc-fabric}[Fabric]
+* {doc-drush}[Drush] (version 6 or 7)
+
+== Installation
+
+CAUTION: The installation procedure to set-up Docker is not described here. Please refer to the official documentation on how to install {doc-docker-installation}[Docker Engine]. The Docker image is based on our {doc-docker-baseimage}[Docker base image], that will automatically installed at setup.
+
+For Fabric to detect Drupalizer as Python module, clone the repository in a directory called `fabfile`.
+
+To test the installation, run:
+
+ fab --list
+
+Then, copy and, optionally, edit your local configuration file:
+
+ $ cp fabfile/default_vars.py fabfile/local_vars.py
+
+You are now ready to build your Drupal site:
+
+ $ fab init
+
+
+== About this document
+
+This document uses the Asciidoc syntax generator.
+It is a convenient tool allowing to write documentation in raw text files, and convert them to HTML or PDF later on.
+
+Visit https://github.com/asciidoctor[Asciidoctor @ *GitHub*] for more informations.
+The {doc-asciidoctor}[AsciiDoc Recommanded Practices] is also recommanded.
+
+To generate a HTML version, first install asciidoctor package on your Linux distribution, then issue following command:
+
+ $ asciidoctor README.adoc
+
+The README.html is generated in the current directory.
+
+Asciidoctor provides a native PDF renderer for Asciidoc. Still in alpha, but worth the try. Please follow the instructions on the official documentation to
+install it, then issue following command:
+
+ $ asciidoctor-pdf README.adoc
+
+The README.pdf file shall be created in the current directory.
