@@ -20,3 +20,4 @@ This project adheres to http://semver.org/[Semantic Versioning].
 === Deprecated
 
 * Almost every commands ... Run `fab --list` !
+* Change configuration file syntax
