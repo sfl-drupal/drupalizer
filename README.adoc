@@ -156,6 +156,17 @@ CAUTION: This command may wipe the modifications made in the working directories
 
 TIP: The formatters used are _pretty_ and _junit_.
 
+* _Deploy_ the Drupal installation to a Web Server
+
+ $ fab deploy:dev
+
+TIP: 'dev' is the environment to deploy the Drupal installation, see the default_vars.py file.
+
+* _Deploy_ the Drupal installation to Aegir
+
+ $ fab --set=build_number=1,migrate=true,remove_platform_without_sites=true deploy:dev
+
+TIP: 'migrate' and 'remove_platform_without_sites' are optionals parameters but 'build_number' is not, you should pass it always with a different value.
 
 == Other common tasks
 
