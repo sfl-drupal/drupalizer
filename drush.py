@@ -165,12 +165,12 @@ def gen_doc(role='docker'):
     :param role Default 'role' where to run the task
     """
 
-    if os.path.isfile('{}/README.adoc'.format(env.docker_workspace)):
+    if h.fab_exists(role, '{}/README.adoc'.format(env.docker_workspace)):
         h.fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(env.docker_workspace,
                                                                                        env.docker_workspace))
         print(green('README.html generated in {}'.format(env.docker_workspace)))
 
-    if os.path.isfile('{}/CHANGELOG.adoc'.format(env.docker_workspace)):
+    if h.fab_exists(role, '{}/CHANGELOG.adoc'.format(env.docker_workspace)):
         h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.docker_workspace,
                                                                                              env.docker_workspace))
         print(green('CHANGELOG.html generated in {}'.format(env.docker_workspace)))
