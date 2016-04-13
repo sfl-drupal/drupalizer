@@ -220,7 +220,7 @@ def migrate(environment):
         if env.get('migrate', "false") == "true":
             _aegir_migrate_sites(target, environment, platform)
 
-        if env.get('remove_platform_without_sites', "false") == "true":
+        if env.get('remove_platforms', "false") == "true":
             _aegir_remove_platform_without_sites(target, environment, platform)
     else:
         # Deploy to a Web Server
