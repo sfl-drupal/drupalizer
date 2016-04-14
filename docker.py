@@ -141,7 +141,7 @@ def container_start(role='local'):
                 # If container was successful build, get the IP address and show it to the user.
                 env.container_ip = h.fab_run(role, 'docker inspect -f "{{{{.NetworkSettings.IPAddress}}}}" '
                                              '{}_container'.format(env.project_name), capture=True)
-                if env.interactive_mode:
+                if env.get('interactive_mode', True) != 'false':
                     h.fab_update_hosts(env.container_ip, env.site_hostname)
 
                     print(green('Docker container {}_container was build successful. '
@@ -165,7 +165,7 @@ def container_stop(role='local'):
     """
     with h.fab_cd(role, env.workspace):
         if '{}_container'.format(env.project_name) in docker_ps():
-            if env.interactive_mode:
+            if env.get('interactive_mode', True) != 'false':
                 h.fab_remove_from_hosts(env.site_hostname)
             h.fab_run(role, 'docker stop {}_container'.format(env.project_name))
             print(green('Docker container {}_container was successful stopped'.format(env.project_name)))
@@ -183,7 +183,7 @@ def container_remove(role='local'):
     with h.fab_cd(role, env.workspace):
         if '{}_container'.format(env.project_name) in docker_ps():
 
-            if env.interactive_mode:
+            if env.get('interactive_mode', True) != 'false':
                 h.fab_remove_from_hosts(env.site_hostname)
             
             h.fab_run(role, 'docker rm -f {}_container'.format(env.project_name))
