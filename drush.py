@@ -21,10 +21,7 @@ from fabric.api import task, roles, env
 from fabric.contrib.console import confirm
 from fabric.colors import red, green
 
-# Import datetime
 from datetime import datetime
-
-import os.path
 
 import helpers as h
 import core as c
@@ -74,10 +71,10 @@ def aliases():
     with h.fab_cd(role, drush_aliases):
         # Create aliases
         if h.fab_exists(role, '{}/aliases.drushrc.php'.format(drush_aliases)):
-            h.fab_run(role, 'rm aliases.drushrc.php')
+            h.fab_run(role, 'rm {}/aliases.drushrc.php'.format(drush_aliases))
         h.fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(workspace))
 
-    print green('Drush aliases have been copied to {} directory.'.format(drush_aliases))
+    print(green('Drush aliases have been copied to {} directory.'.format(drush_aliases)))
 
 
 @task
@@ -127,7 +124,7 @@ def site_install():
                                                                                           site_admin_pass,
                                                                                           site_subdir))
 
-        print green('Site installed successfully!')
+        print(green('Site installed successfully!'))
 
         # Import db_dump if it exists.
         if 'db_dump' in env and env.db_dump is not False:
@@ -147,7 +144,7 @@ def archive_dump(role='docker'):
     with h.fab_cd(role, env.docker_site_root):
         platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
         h.fab_run(role, 'rm -f {}/build/*.tar.gz'.format(env.docker_workspace))
-        print green('All tar.gz archives found in {}/build have been deleted.'.format(env.docker_workspace))
+        print(green('All tar.gz archives found in {}/build have been deleted.'.format(env.docker_workspace)))
 
         h.fab_run(
             role,
@@ -166,11 +163,11 @@ def gen_doc(role='docker'):
     """
 
     if h.fab_exists(role, '{}/README.adoc'.format(env.docker_workspace)):
-        h.fab_run(role, 'asciidoctor -b html5 -o {}/README.html {}/README.adoc'.format(env.docker_workspace,
-                                                                                       env.docker_workspace))
+        h.fab_run(role, 'asciidoctor -d book -b html5 -o {}/README.html {}/README.adoc'.
+                  format(env.docker_workspace, env.docker_workspace))
         print(green('README.html generated in {}'.format(env.docker_workspace)))
 
     if h.fab_exists(role, '{}/CHANGELOG.adoc'.format(env.docker_workspace)):
-        h.fab_run(role, 'asciidoctor -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.format(env.docker_workspace,
-                                                                                             env.docker_workspace))
+        h.fab_run(role, 'asciidoctor -d book -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.
+                  format(env.docker_workspace, env.docker_workspace))
         print(green('CHANGELOG.html generated in {}'.format(env.docker_workspace)))

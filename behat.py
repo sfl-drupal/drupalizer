@@ -52,7 +52,6 @@ def install():
 @task
 @roles('docker')
 def run():
-
     """
     Execute the complete Behat tests suite.
     :param role Default 'role' where to run the task
