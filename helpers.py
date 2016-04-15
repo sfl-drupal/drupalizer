@@ -47,7 +47,7 @@ env.roledefs['local'] = ["{}@{}".format(user_name, host_name)]
 env.roledefs['docker'] = ["root@{}".format(env.container_ip)]
 
 env.builddir = path.join(env.workspace, 'build')
-env.makefile = '{}/{}/{}'.format(env.builddir, env.site_profile, env.site_profile_makefile)
+env.makefile = path.join(env.builddir, env.site_profile, env.site_profile_makefile)
 env.site_drush_aliases = path.join(env.site_root, 'sites/all/drush')
 
 def fab_run(role="local", cmd="", capture=False):
@@ -147,7 +147,7 @@ def hook_execute(cmds=env.hook_post_install, role='docker'):
 
 
 def copy_public_ssh_keys(role='local'):
-    
+
     """
     Copy your public SSH keys to use it in the docker container to connect to it using ssh protocol.
     :param role Default 'role' where to run the task
