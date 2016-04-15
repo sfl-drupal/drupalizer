@@ -72,7 +72,7 @@ def aliases():
         # Create aliases
         if h.fab_exists(role, '{}/aliases.drushrc.php'.format(drush_aliases)):
             h.fab_run(role, 'rm {}/aliases.drushrc.php'.format(drush_aliases))
-        h.fab_run(role, 'ln -s {}/conf/aliases.drushrc.php .'.format(workspace))
+        h.fab_run(role, 'cp {}/conf/aliases.drushrc.php .'.format(workspace))
 
     print(green('Drush aliases have been copied to {} directory.'.format(drush_aliases)))
 
