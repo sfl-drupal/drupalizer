@@ -119,9 +119,9 @@ def fab_remove_from_hosts(site_hostname):
 
 
 def fab_update_container_ip(container_ip):
-    local('sed -i "/env.container_ip/d" {}/local_vars.py'.format(os.path.dirname(os.path.abspath(__file__))))
+    local('sed -i "/env.container_ip/d" {}/local_vars.py'.format(path.dirname(path.abspath(__file__))))
     local('sed -i "/# Docker auto-added container IP/a env.container_ip = \'{}\'" '
-          '{}/local_vars.py'.format(''.join(container_ip), os.path.dirname(os.path.abspath(__file__))))
+          '{}/local_vars.py'.format(''.join(container_ip), path.dirname(path.abspath(__file__))))
 
 
 def fab_update_hosts(ip, site_hostname):
@@ -135,15 +135,12 @@ def fab_update_hosts(ip, site_hostname):
     fab_add_to_hosts(ip, site_hostname)
 
 
-def hook_execute(hook, role='docker'):
+def hook_execute(cmds=env.hook_post_install, role='docker'):
     """
     Execute a list of drush commands after the installation or update process
     :param role Default 'role' where to run the task
     :param cmds Drush commands to run, default to POST_INSTALL, it could be POST_UPDATE too.
     """
-
-    cmds = env.hook_post_install
-
     for cmd in cmds:
         with fab_cd(role, env.docker_site_root):
             fab_run(role, cmd)
