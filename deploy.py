@@ -153,7 +153,7 @@ def _aegir_remove_platform_without_sites(target, environment, platform):
     :param platform The patern name of the platform in wich the sites will be migrated on
     """
     aegir_path = target.get('aegir_path')
-    run('{}/remove-platform-wihout-sites {} {}'.format(aegir_path, environment, platform))
+    run('{}/remove-platforms {} {}'.format(aegir_path, environment, platform))
 
 
 @task
@@ -217,7 +217,7 @@ def migrate(environment):
     if _is_aegir_deployment(target):
         # Deploy to Aegir server.
         platform = _aegir_platform_name(target, environment)
-        if env.get('migrate', "false") == "true":
+        if env.get('migrate_sites', "false") == "true":
             _aegir_migrate_sites(target, environment, platform)
 
         if env.get('remove_platforms', "false") == "true":

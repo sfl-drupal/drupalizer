@@ -26,11 +26,6 @@ from fabric.contrib.files import exists
 # Import socket to find the localhost IP address
 import socket
 
-import os
-
-# Import datetime
-from datetime import datetime
-
 # Import default variables
 from default_vars import *
 
