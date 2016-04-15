@@ -88,6 +88,7 @@ def updatedb():
 
     with h.fab_cd(role, env.docker_site_root):
         h.fab_run(role, 'drush updatedb -y')
+        h.hook_execute(env.hook_post_update, role)
 
 
 @task
@@ -130,7 +131,7 @@ def site_install():
         if 'db_dump' in env and env.db_dump is not False:
             c.db_import(env.db_dump, role)
 
-    h.hook_execute('post_install', role)
+    h.hook_execute(env.hook_post_install, role)
 
 
 @task
