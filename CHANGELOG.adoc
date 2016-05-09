@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This file should respect change log http://keepachangelog.com/[best practices].
 This project adheres to http://semver.org/[Semantic Versioning].
 
-== [Unreleased]
+== 2.0.0 - 2016/05/09
 
 === Added
 
