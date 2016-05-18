@@ -117,7 +117,7 @@ def site_install():
     with h.fab_cd(role, site_root):
         locale = '--locale="fr"' if env.locale else ''
 
-        h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
+        h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name="{}" '
                         '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
                                                                                           db_user, db_pass,
                                                                                           db_host, db_name, site_name,
