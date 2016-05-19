@@ -28,8 +28,15 @@ env.site_admin_pass = 'admin'
 env.site_subdir = 'default'
 
 
+# PatternLab
+
+# Specify the PatternLab dir is you want the style guide to be generated
+env.patternlab_dir = ''
+
+
 # Database dump
 # To enable it, replace the boolean value with the absolute path of a gzipped SQL dump file.
+
 env.db_dump = False
 
 # Docker
