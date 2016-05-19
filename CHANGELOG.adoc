@@ -6,9 +6,13 @@ This project adheres to http://semver.org/[Semantic Versioning].
 
 == [Unreleased]
 
-### Fixed
+=== Fixed
 
 * Site name can now have whitespaces without breaking the shell execution string
+
+=== Added
+
+* Add a Patternlab command to build the static style guide: `fab patternlab.build`.
 
 == 2.0.0 - 2016/05/09
 
