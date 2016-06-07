@@ -88,6 +88,16 @@ Those are global project parameters mandatory to Drupalizer.
 
 |===
 
+=== Patternlab settings
+
+|===
+|Parameters |Description
+
+|_patternlab_dir_
+|The Patternlab directory. Default: _empty_
+
+|===
+
 === Docker-related settings
 
 |===
@@ -194,3 +204,7 @@ CAUTION: This command will wipe all the modifications made in the working direct
 * _Archive_ the full codebase and the database using drush archive_dump:
 
  $ fab drush.archive_dump
+
+* _Generate_ the guide style:
+
+ $ fab patternlab.build

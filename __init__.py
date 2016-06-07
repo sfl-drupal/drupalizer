@@ -2,6 +2,7 @@ import docker
 from deploy  import *
 import drush
 import behat
+import patternlab
 from .environments import e
 
 from fabric.api import task, env, execute
