@@ -52,7 +52,7 @@ def make(action='install'):
     if not h.fab_exists('local', env.site_root):
         h.fab_run('local', "mkdir {}".format(env.site_root))
     with h.fab_cd('local', env.site_root):
-        h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
+        h.fab_run('local', '{} make {} {} -y'.format(env.drush, drush_opts, env.makefile))
 
 
 @task
@@ -117,8 +117,8 @@ def site_install():
     with h.fab_cd(role, site_root):
         locale = '--locale="fr"' if env.locale else ''
 
-        h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
-                        '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
+        h.fab_run(role, 'sudo -u {} {} site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name={} '
+                        '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, env.drush, profile, locale,
                                                                                           db_user, db_pass,
                                                                                           db_host, db_name, site_name,
                                                                                           site_admin_name,

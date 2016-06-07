@@ -169,7 +169,7 @@ def update_profile(role='local'):
             print green('{} installation profile updated in {}/{}'.format(env.site_profile, env.builddir, env.site_profile))
     else:
         with fab_cd(role, env.builddir):
-            fab_run(role, 'git clone {} {}'.format(env.site_profile_repo, env.site_profile))
+            fab_run(role, 'git clone --branch={} {} {}'.format(env.site_profile_branch, env.site_profile_repo, env.site_profile))
             print green('{} installation profile cloned in {}/{}'.format(env.site_profile, env.builddir, env.site_profile))
 
 
