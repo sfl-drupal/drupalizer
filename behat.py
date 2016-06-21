@@ -51,7 +51,7 @@ def install():
 
 @task
 @roles('docker')
-def run():
+def run(tags='~@wip&&~@disabled&&~@test'):
     """
     Execute the complete Behat tests suite.
     :param role Default 'role' where to run the task
@@ -68,8 +68,5 @@ def run():
     if not h.fab_exists(role, '{}/tests/behat/behat.yml'.format(workspace)):
         init()
     with h.fab_cd(role, '{}/tests/behat'.format(workspace)):
-        h.fab_run(role, 'behat --format junit --format pretty --tags "~@wip&&~@disabled&&~@test" --colors')
-        # To run behat with only one test for example, comment previous line
-        # and uncomment next one
-        # fab_run(role, 'behat --format pretty --tags "~@wip&&~@disabled&&@yourTest" --colors')
+        h.fab_run(role, 'behat --format junit --format pretty --tags "{}" --colors'.format(tags))
 
