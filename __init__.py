@@ -8,6 +8,7 @@ from .environments import e
 from fabric.api import task, env, execute
 
 import helpers as h
+import re
 from os import path
 from fabric.colors import red, green
 
@@ -68,26 +69,18 @@ def update():
 @task
 def verif():
     # STEP 1
-    # se mettre a la racine du projet
     h.fab_cd('local', env.workspace)
-    # chercher tous les repertoires .git (de maniere recursive)
     repos = local('find ./ -type d -name ".git"', capture=True).splitlines()
-    # pour chaque .git trouve, s'y rendre et voir ce qu'il en est
     for repo in repos:
-        #repoLocalPath = path.join(env.workspace, repo).replace('/.git', '')
         repoLocalPath = path.normpath(path.join(env.workspace, repo, '..'))
         with h.fab_cd('local', repoLocalPath):
-            print green('Verfiy repo in ' + repoLocalPath)
+            print green('Verify repo in ' + repoLocalPath)
+
             remoteName = local('git remote', capture=True)
-            # - est ce que les branches locales existent sur la remote (git branch -vv)
-            remoteBranches = local('git branch -rvv', capture=True).splitlines()
-            for (i, remoteBranch) in enumerate(remoteBranches):
-                remoteBranches[i] = remoteBranch.replace('* ', '').strip().split(' ').pop(0)
-            localBranches = local('git branch -lvv', capture=True).splitlines()
-            for (i, localBranch) in enumerate(localBranches):
-                localBranches[i] = localBranch.replace('* ', '').strip().split(' ').pop(0)
+
+            localBranches = _getLocalBranchNames()
             for localBranch in localBranches:
-                if ((remoteName + '/' + localBranch) not in remoteBranches):
+                if (not _remoteBranchExists(localBranch)):
                     print red('Local branch "' + localBranch + '" is not present on "' + remoteName + '" remote.')
                     # to do, la pusher (git push remoteName localBranch)
 
@@ -101,6 +94,26 @@ def verif():
     # - s'il y a du code non-stage, en faire un commit
     # - si la Branch n'est pas trackee, la pusher
     # - s'il y a des commits non pushes, les pusher
+
+def _getLocalBranchNames():
+    branches = local('git branch --list', capture=True).splitlines()
+    branchNames = []
+    for (i, branch) in enumerate(branches):
+        branchName = branch.replace('*', '').strip()
+        if (not _isBranchDetached(branchName)):
+            branchNames.append(branchName)
+
+    return branchNames
+
+
+def _isBranchDetached(branchName):
+    pattern = re.compile('\(.*\)')
+    return pattern.match(branchName)
+
+
+def _remoteBranchExists(branchName):
+    return (len(local('git branch --list --remote "*' + branchName + '"', capture=True).splitlines()) > 0)
+
 
 @task
 def release():
