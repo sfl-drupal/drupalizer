@@ -20,11 +20,10 @@ def check_status():
       print green('Your workspace is clean.')
   
 def isGitDirty():
-    h.fab_cd('local', env.workspace)
-    repos = local('find ./ -name ".git"', capture=True).splitlines()
+    repos = local('find ' + path.normpath(env.workspace) + ' -name ".git"', capture=True).splitlines()
     nbWarnings = 0
     for repo in repos:
-        repoLocalPath = path.normpath(path.join(env.workspace, repo, '..'))
+        repoLocalPath = path.normpath(path.join(repo, '..'))
         with h.fab_cd('local', repoLocalPath):
             print green('Verify repo in ' + repoLocalPath)
 
@@ -55,7 +54,7 @@ def isGitDirty():
                         '??': 'is not indexed.',
                     }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
 
-            return (nbWarnings > 0)
+    return (nbWarnings > 0)
 
 
     # STEP 2
