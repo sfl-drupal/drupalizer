@@ -63,7 +63,7 @@ def update():
 
     if (git.isGitDirty()):
       if (confirm(red('There are warnings on status of your repositories. '
-                      'Do you want to continue and reset all changes to remote repositories'' states?', default=False))):
+                      'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
         execute(drush.make, 'update')
         execute(drush.updatedb)
         execute(behat.init)
