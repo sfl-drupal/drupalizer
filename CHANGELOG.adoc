@@ -13,6 +13,7 @@ This project adheres to http://semver.org/[Semantic Versioning].
 === Added
 
 * Add a Patternlab command to build the static style guide: `fab patternlab.build`.
+* Add a Git command to verify repositories states and warn user if changes might be lost.
 
 == 2.0.0 - 2016/05/09
 
