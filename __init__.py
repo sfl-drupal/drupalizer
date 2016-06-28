@@ -78,18 +78,18 @@ def verif():
 
             remoteName = local('git remote', capture=True)
 
-            localBranches = _getLocalBranchNames()
-            for localBranch in localBranches:
-                if (not _remoteBranchExists(localBranch)):
-                    print red('Local branch "' + localBranch + '" is not present on "' + remoteName + '" remote.')
+            localBranchesRawInfo = _getLocalBranchesInformation()
+            for localBranchRawInfo in localBranchesRawInfo:
+                localBranchName = _getBranchName(localBranchRawInfo)
+                if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
+                    print red('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
                     # to do, la pusher (git push remoteName localBranch)
 
             print green('Verify branches status against remote...');
-            branches = local('git branch --list -vv', capture=True).splitlines()
             pattern = re.compile('.*\[.* ahead .*\].*')
-            for branch in branches:
-                if (pattern.match(branch)):
-                    print red('Local branch "' + branch.replace('*', '').strip().split()[0] + '" is ahead of remote branch.');
+            for localBranchRawInfo in localBranchesRawInfo:
+                if (pattern.match(localBranchRawInfo)):
+                    print red('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
             # - est ce qu'il y a du code non-stage (git status -s)
             # on s'arrete a chaque alerte, et on demande quoi faire...
 
@@ -100,16 +100,15 @@ def verif():
     # - si la Branch n'est pas trackee, la pusher
     # - s'il y a des commits non pushes, les pusher
 
-def _getLocalBranchNames():
-    branches = local('git branch --list', capture=True).splitlines()
-    branchNames = []
-    for (i, branch) in enumerate(branches):
-        branchName = branch.replace('*', '').strip()
-        if (not _isBranchDetached(branchName)):
-            branchNames.append(branchName)
+def _getLocalBranchesInformation():
+    return local('git branch --list -vv', capture=True).splitlines()
 
-    return branchNames
-
+def _getBranchName(branchRawData):
+    branchName = branchRawData.replace('*', '').strip()
+    if (_isBranchDetached(branchName)):
+        return None
+    else:
+        return branchName.split()[0]
 
 def _isBranchDetached(branchName):
     pattern = re.compile('\(.*\)')
