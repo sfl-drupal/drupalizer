@@ -84,7 +84,12 @@ def verif():
                     print red('Local branch "' + localBranch + '" is not present on "' + remoteName + '" remote.')
                     # to do, la pusher (git push remoteName localBranch)
 
-            # - pour chaque Branch, est ce qu'il y a des commits non-pushes (git branch -vv)
+            print green('Verify branches status against remote...');
+            branches = local('git branch --list -vv', capture=True).splitlines()
+            pattern = re.compile('.*\[.* ahead .*\].*')
+            for branch in branches:
+                if (pattern.match(branch)):
+                    print red('Local branch "' + branch.replace('*', '').strip().split()[0] + '" is ahead of remote branch.');
             # - est ce qu'il y a du code non-stage (git status -s)
             # on s'arrete a chaque alerte, et on demande quoi faire...
 
