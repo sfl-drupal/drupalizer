@@ -70,7 +70,7 @@ def update():
 def verif():
     # STEP 1
     h.fab_cd('local', env.workspace)
-    repos = local('find ./ -type d -name ".git"', capture=True).splitlines()
+    repos = local('find ./ -name ".git"', capture=True).splitlines()
     for repo in repos:
         repoLocalPath = path.normpath(path.join(env.workspace, repo, '..'))
         with h.fab_cd('local', repoLocalPath):
