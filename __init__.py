@@ -90,7 +90,17 @@ def verif():
             for localBranchRawInfo in localBranchesRawInfo:
                 if (pattern.match(localBranchRawInfo)):
                     print red('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
-            # - est ce qu'il y a du code non-stage (git status -s)
+
+            print green('Verify local files status against current HEAD commit...')
+            filesStatusRawInfo = _getFilesStatusInformation()
+            if (len(filesStatusRawInfo) > 0):
+                for fileStatus in filesStatusRawInfo:
+                    fileStatusData = fileStatus.split()
+                    print red('File "' + fileStatusData[1] + '" ' + {
+                        'M': 'has un-commited modifications.',
+                        '??': 'is not indexed.',
+                    }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+
             # on s'arrete a chaque alerte, et on demande quoi faire...
 
 
@@ -117,6 +127,10 @@ def _isBranchDetached(branchName):
 
 def _remoteBranchExists(branchName):
     return (len(local('git branch --list --remote "*' + branchName + '"', capture=True).splitlines()) > 0)
+
+
+def _getFilesStatusInformation():
+    return local('git status -s', capture=True).splitlines()
 
 
 @task
