@@ -18,12 +18,15 @@ def init():
     Complete local installation process, used generally when building the docker image for install and configure Drupal.
     """
 
-    execute(docker.image_create)
-    execute(docker.container_start)
-    execute(drush.make, 'install')
-    execute(drush.site_install, host='root@{}'.format(env.container_ip))
-    execute(drush.aliases)
-    execute(behat.init, host='root@{}'.format(env.container_ip))
+    if (git.isGitDirty()):
+      if (confirm(red('There are warnings on status of your repositories. '
+                      'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
+        execute(docker.image_create)
+        execute(docker.container_start)
+        execute(drush.make, 'install')
+        execute(drush.site_install, host='root@{}'.format(env.container_ip))
+        execute(drush.aliases)
+        execute(behat.init, host='root@{}'.format(env.container_ip))
 
 
 
@@ -48,9 +51,12 @@ def install():
     Run the full installation process.
     """
 
-    execute(drush.make, 'install')
-    execute(drush.site_install)
-    execute(behat.init)
+    if (git.isGitDirty()):
+      if (confirm(red('There are warnings on status of your repositories. '
+                      'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
+        execute(drush.make, 'install')
+        execute(drush.site_install)
+        execute(behat.init)
 
 
 
