@@ -20,11 +20,14 @@ from __future__ import unicode_literals
 from fabric.api import task, roles, env
 from fabric.contrib.console import confirm
 from fabric.colors import red, green
+from fabric.utils import abort
 
 from datetime import datetime
 
 import helpers as h
 import core as c
+
+from git import isGitDirty
 
 
 @task(alias='make')
@@ -33,6 +36,12 @@ def make(action='install'):
     """
     Build the platform by running the Makefile specified in the local_vars.py configuration file.
     """
+
+    if env.get('interactive_mode', True):
+      if (isGitDirty()):
+        if (not confirm(red('There are warnings on status of your repositories. '
+                        'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
+          abort('Aborting "drush {}" since there might be a risk of loosing local data.'.format(action))
 
     drush_opts = "--prepare-install " if action != 'update' else ''
 
