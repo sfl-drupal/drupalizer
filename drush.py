@@ -50,19 +50,18 @@ def make(action='install'):
         drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
         h.update_profile()
 
-    if env.get('interactive_mode', True) == 'false':
+    if not env.get('interactive_mode', True):
         drush_opts += "--translations=fr "
     elif confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
                      'the site will be installed in English only'.format(action, env.site_root))):
         drush_opts += "--translations=fr "
 
-    if env.get('interactive_mode', True) != 'false':
+    if env.get('interactive_mode', True):
         drush_opts += " --working-copy --no-gitinfofile"
     if not h.fab_exists('local', env.site_root):
         h.fab_run('local', "mkdir {}".format(env.site_root))
     with h.fab_cd('local', env.site_root):
         h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
-
 
 @task
 @roles('local')
