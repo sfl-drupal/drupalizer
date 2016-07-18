@@ -3,9 +3,11 @@ from os import path
 from fabric.api import task, env, local
 from fabric.colors import red, green, yellow
 from fabric.api import task, env, execute
+from fabric.contrib.console import confirm
 from .environments import e
 
 import helpers as h
+import time
 import re
 
 @task(alias='is_dirty')
@@ -34,6 +36,7 @@ def isGitDirty():
     # - s'il y a du code non-stage, en faire un commit
     # - si la Branch n'est pas trackee, la pusher
     # - s'il y a des commits non pushes, les pusher
+    # - attention aux conflits, faire un pull d'abord et valider la fusion automatique
 
 
 def _checkRepo(repoLocalPath):
@@ -45,41 +48,23 @@ def _checkRepo(repoLocalPath):
         remoteName = local('git remote', capture=True)
         remoteURL = local('git remote get-url ' + remoteName, capture=True)
 
-        localBranchesRawInfo = _getLocalBranchesInformation()
         filesStatusRawInfo = _getFilesStatusInformation()
+        print green('Verify local files status against current HEAD commit...')
+        nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName)
 
+        localBranchesRawInfo = _getLocalBranchesInformation()
         print green('Verify local branches exist on remote "' + remoteName + '" (URL: ' + remoteURL + ')...');
-        nbWarnings += _checkLocalBranchesExistOnRemote(localBranchesRawInfo)
+        nbWarnings += _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName)
 
         print green('Verify branches status against remote...');
-        nbWarnings += _checkLocalBranchesStatusVsRemote(localBranchesRawInfo)
-
-        print green('Verify local files status against current HEAD commit...')
-        nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo)
+        nbWarnings += _checkLocalBranchesStatusVsRemote(localBranchesRawInfo, remoteName)
 
         return nbWarnings
 
 
-def _checkLocalBranchesExistOnRemote(localBranchesRawInfo):
+def _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName):
     nbWarnings = 0
-    for localBranchRawInfo in localBranchesRawInfo:
-        localBranchName = _getBranchName(localBranchRawInfo)
-        if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
-            nbWarnings += 1
-            print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
-    return nbWarnings
-
-def _checkLocalBranchesStatusVsRemote(localBranchesRawInfo):
-    nbWarnings = 0
-    pattern = re.compile('.*\[.* ahead .*\].*')
-    for localBranchRawInfo in localBranchesRawInfo:
-        if (pattern.match(localBranchRawInfo)):
-            nbWarnings += 1
-            print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
-    return nbWarnings
-
-def _checkFilesStatusVsHeadCommit(filesStatusRawInfo):
-    nbWarnings = 0
+    addableFiles = []
     if (len(filesStatusRawInfo) > 0):
         for fileStatus in filesStatusRawInfo:
             fileStatusData = fileStatus.split()
@@ -87,10 +72,50 @@ def _checkFilesStatusVsHeadCommit(filesStatusRawInfo):
             if fileStatusData[1] == 'fabfile':
                 break
             nbWarnings += 1
+            addableFiles.append(fileStatusData[1])
             print yellow('File "' + fileStatusData[1] + '" ' + {
                 'M': 'has un-commited modifications.',
+                'D': 'has been deleted.',
                 '??': 'is not indexed.',
             }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+
+    if (nbWarnings > 0):
+        if (confirm(red('There are many files to be commited. Do you want to stage and commit these files?'), default=False)):
+            local('git add ' + ' '.join(addableFiles))
+            local('git commit -m "Automatic commit by Drupalizer: ' + time.strftime("%Y-%m-%d %H:%M:%S") +'"')
+            branchName = local('git name-rev --name-only HEAD', capture=True)
+            local('git push ' + remoteName + ' ' + branchName)
+            # Do not alert with diff as it has been commited and pushed
+            nbWarnings = 0
+
+    return nbWarnings
+
+def _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName):
+    nbWarnings = 0
+    pushableBranches = []
+    for localBranchRawInfo in localBranchesRawInfo:
+        localBranchName = _getBranchName(localBranchRawInfo)
+        if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
+            nbWarnings += 1
+            pushableBranches.append(localBranchName)
+            print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
+
+    if (nbWarnings > 0):
+        if (confirm(red('There are many local branches not present on remote. Do you want to sync theses?'), default=False)):
+            for branchName in pushableBranches:
+                local('git push ' + remoteName + ' ' + branchName)
+            # Do not alert with diff as it has been commited and pushed
+            nbWarnings = 0
+
+    return nbWarnings
+
+def _checkLocalBranchesStatusVsRemote(localBranchesRawInfo, remoteName):
+    nbWarnings = 0
+    pattern = re.compile('.*\[.* ahead .*\].*')
+    for localBranchRawInfo in localBranchesRawInfo:
+        if (pattern.match(localBranchRawInfo)):
+            nbWarnings += 1
+            print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
     return nbWarnings
 
 def _getLocalBranchesInformation():
