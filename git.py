@@ -45,37 +45,53 @@ def _checkRepo(repoLocalPath):
         remoteName = local('git remote', capture=True)
         remoteURL = local('git remote get-url ' + remoteName, capture=True)
 
-        print green('Verify local branches exist on remote "' + remoteName + '" (URL: ' + remoteURL + ')...');
         localBranchesRawInfo = _getLocalBranchesInformation()
-        for localBranchRawInfo in localBranchesRawInfo:
-            localBranchName = _getBranchName(localBranchRawInfo)
-            if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
-                nbWarnings += 1
-                print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
+        filesStatusRawInfo = _getFilesStatusInformation()
+
+        print green('Verify local branches exist on remote "' + remoteName + '" (URL: ' + remoteURL + ')...');
+        nbWarnings += _checkLocalBranchesExistOnRemote(localBranchesRawInfo)
 
         print green('Verify branches status against remote...');
-        pattern = re.compile('.*\[.* ahead .*\].*')
-        for localBranchRawInfo in localBranchesRawInfo:
-            if (pattern.match(localBranchRawInfo)):
-                nbWarnings += 1
-                print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
+        nbWarnings += _checkLocalBranchesStatusVsRemote(localBranchesRawInfo)
 
         print green('Verify local files status against current HEAD commit...')
-        filesStatusRawInfo = _getFilesStatusInformation()
-        if (len(filesStatusRawInfo) > 0):
-            for fileStatus in filesStatusRawInfo:
-                fileStatusData = fileStatus.split()
-                # Break loop if filename is "fabfile"
-                if fileStatusData[1] == 'fabfile':
-                    break
-                nbWarnings += 1
-                print yellow('File "' + fileStatusData[1] + '" ' + {
-                    'M': 'has un-commited modifications.',
-                    '??': 'is not indexed.',
-                }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+        nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo)
 
         return nbWarnings
 
+
+def _checkLocalBranchesExistOnRemote(localBranchesRawInfo):
+    nbWarnings = 0
+    for localBranchRawInfo in localBranchesRawInfo:
+        localBranchName = _getBranchName(localBranchRawInfo)
+        if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
+            nbWarnings += 1
+            print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
+    return nbWarnings
+
+def _checkLocalBranchesStatusVsRemote(localBranchesRawInfo):
+    nbWarnings = 0
+    pattern = re.compile('.*\[.* ahead .*\].*')
+    for localBranchRawInfo in localBranchesRawInfo:
+        if (pattern.match(localBranchRawInfo)):
+            nbWarnings += 1
+            print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
+    return nbWarnings
+
+def _checkFilesStatusVsHeadCommit(filesStatusRawInfo):
+    nbWarnings = 0
+    if (len(filesStatusRawInfo) > 0):
+        for fileStatus in filesStatusRawInfo:
+            fileStatusData = fileStatus.split()
+            # Break loop if filename is "fabfile"
+            if fileStatusData[1] == 'fabfile':
+                break
+            nbWarnings += 1
+            print yellow('File "' + fileStatusData[1] + '" ' + {
+                'M': 'has un-commited modifications.',
+                '??': 'is not indexed.',
+            }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+    return nbWarnings
 
 def _getLocalBranchesInformation():
     return local('git branch --list -vv', capture=True).splitlines()
