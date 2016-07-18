@@ -49,6 +49,9 @@ def isGitDirty():
             if (len(filesStatusRawInfo) > 0):
                 for fileStatus in filesStatusRawInfo:
                     fileStatusData = fileStatus.split()
+                    # Break loop if filename is "fabfile"
+                    if fileStatusData[1] == 'fabfile':
+                        break
                     nbWarnings += 1
                     print yellow('File "' + fileStatusData[1] + '" ' + {
                         'M': 'has un-commited modifications.',
