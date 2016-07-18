@@ -18,13 +18,14 @@ def check_status():
       print red('Your workspace is not clean.')
     else:
       print green('Your workspace is clean.')
-  
+
 def isGitDirty():
     repos = local('find ' + path.normpath(env.workspace) + ' -name ".git"', capture=True).splitlines()
     nbWarnings = 0
     for repo in repos:
         repoLocalPath = path.normpath(path.join(repo, '..'))
         with h.fab_cd('local', repoLocalPath):
+            print green('---')
             print green('Verify repo in ' + repoLocalPath)
 
             remoteName = local('git remote', capture=True)
