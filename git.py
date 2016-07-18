@@ -30,6 +30,7 @@ def isGitDirty():
 
             remoteName = local('git remote', capture=True)
 
+            print green('Verify local branches exist on remote...');
             localBranchesRawInfo = _getLocalBranchesInformation()
             for localBranchRawInfo in localBranchesRawInfo:
                 localBranchName = _getBranchName(localBranchRawInfo)
