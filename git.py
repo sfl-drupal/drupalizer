@@ -15,49 +15,16 @@ def check_status():
     """
 
     if (isGitDirty()):
-      print red('Your workspace is not clean.')
+        print red('Your workspace is not clean.')
     else:
-      print green('Your workspace is clean.')
+        print green('Your workspace is clean.')
 
 def isGitDirty():
     repos = local('find ' + path.normpath(env.workspace) + ' -name ".git"', capture=True).splitlines()
     nbWarnings = 0
     for repo in repos:
         repoLocalPath = path.normpath(path.join(repo, '..'))
-        with h.fab_cd('local', repoLocalPath):
-            print green('---')
-            print green('Verify repo in ' + repoLocalPath)
-
-            remoteName = local('git remote', capture=True)
-
-            print green('Verify local branches exist on remote...');
-            localBranchesRawInfo = _getLocalBranchesInformation()
-            for localBranchRawInfo in localBranchesRawInfo:
-                localBranchName = _getBranchName(localBranchRawInfo)
-                if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
-                    nbWarnings += 1
-                    print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
-
-            print green('Verify branches status against remote...');
-            pattern = re.compile('.*\[.* ahead .*\].*')
-            for localBranchRawInfo in localBranchesRawInfo:
-                if (pattern.match(localBranchRawInfo)):
-                    nbWarnings += 1
-                    print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
-
-            print green('Verify local files status against current HEAD commit...')
-            filesStatusRawInfo = _getFilesStatusInformation()
-            if (len(filesStatusRawInfo) > 0):
-                for fileStatus in filesStatusRawInfo:
-                    fileStatusData = fileStatus.split()
-                    # Break loop if filename is "fabfile"
-                    if fileStatusData[1] == 'fabfile':
-                        break
-                    nbWarnings += 1
-                    print yellow('File "' + fileStatusData[1] + '" ' + {
-                        'M': 'has un-commited modifications.',
-                        '??': 'is not indexed.',
-                    }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+        nbWarnings += _checkRepo(repoLocalPath)
 
     return (nbWarnings > 0)
 
@@ -67,6 +34,48 @@ def isGitDirty():
     # - s'il y a du code non-stage, en faire un commit
     # - si la Branch n'est pas trackee, la pusher
     # - s'il y a des commits non pushes, les pusher
+
+
+def _checkRepo(repoLocalPath):
+    nbWarnings = 0
+    with h.fab_cd('local', repoLocalPath):
+        print green('---')
+        print green('Verify repo in ' + repoLocalPath)
+
+        remoteName = local('git remote', capture=True)
+        remoteURL = local('git remote get-url ' + remoteName, capture=True)
+
+        print green('Verify local branches exist on remote "' + remoteName + '" (URL: ' + remoteURL + ')...');
+        localBranchesRawInfo = _getLocalBranchesInformation()
+        for localBranchRawInfo in localBranchesRawInfo:
+            localBranchName = _getBranchName(localBranchRawInfo)
+            if ((localBranchName is not None) and (not _remoteBranchExists(localBranchName))):
+                nbWarnings += 1
+                print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
+
+        print green('Verify branches status against remote...');
+        pattern = re.compile('.*\[.* ahead .*\].*')
+        for localBranchRawInfo in localBranchesRawInfo:
+            if (pattern.match(localBranchRawInfo)):
+                nbWarnings += 1
+                print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
+
+        print green('Verify local files status against current HEAD commit...')
+        filesStatusRawInfo = _getFilesStatusInformation()
+        if (len(filesStatusRawInfo) > 0):
+            for fileStatus in filesStatusRawInfo:
+                fileStatusData = fileStatus.split()
+                # Break loop if filename is "fabfile"
+                if fileStatusData[1] == 'fabfile':
+                    break
+                nbWarnings += 1
+                print yellow('File "' + fileStatusData[1] + '" ' + {
+                    'M': 'has un-commited modifications.',
+                    '??': 'is not indexed.',
+                }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
+
+        return nbWarnings
+
 
 def _getLocalBranchesInformation():
     return local('git branch --list -vv', capture=True).splitlines()
