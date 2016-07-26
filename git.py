@@ -90,23 +90,36 @@ def _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName):
             pushableBranches.append(localBranchName)
             print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
 
-    # TO DO : PUSHER LA BRANCHE SUR LE REPO
-    # if (nbWarnings > 0):
-    #     if (confirm(red('There are many local branches not present on remote. Do you want to sync theses?'), default=False)):
-    #         for branchName in pushableBranches:
-    #             local('git push ' + remoteName + ' ' + branchNqqqame)
-    #         # Do not alert with diff as it has been commited and pushed
-    #         nbWarnings = 0
+    # On suggere de pusher la(les) branche(s) qui sont seulement sur le local
+    if (nbWarnings > 0):
+        if (confirm(red('There are many local branches not present on remote. Do you want to sync theses?'), default=False)):
+            for branchName in pushableBranches:
+                local('git push --set-upstream ' + remoteName + ' ' + branchName)
+            # Do not alert with diff as local branches are now pushed
+            nbWarnings = 0
 
     return nbWarnings
 
 def _checkLocalBranchesStatusVsRemote(localBranchesRawInfo, remoteName):
     nbWarnings = 0
-    pattern = re.compile('.*\[.* ahead .*\].*')
+    pushableBranches = []
+    # on gere un git FR ou EN, a voir ce qu'on peut faire
+    # pour une internationalisation plus cool..
+    pattern = re.compile('.*\[.* (ahead|en avance de) .*\].*')
     for localBranchRawInfo in localBranchesRawInfo:
         if (pattern.match(localBranchRawInfo)):
+            localBranchName = _getBranchName(localBranchRawInfo)
             nbWarnings += 1
-            print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
+            pushableBranches.append(localBranchName)
+            print yellow('Local branch "' + localBranchName + '" is ahead of remote branch.');
+
+    # On suggere de pusher la(les) branche(s) qui sont seulement sur le local
+    if (nbWarnings > 0):
+        if (confirm(red('There are many local branches which are ahead of remote branch. Do you want to sync theses?'), default=False)):
+            for branchName in pushableBranches:
+                local('git push ' + remoteName + ' ' + branchName)
+            # Do not alert with diff as local branches are now pushed
+            nbWarnings = 0
 
     # TO DO : PUSHER LA BRANCHE SUR LE REPO
 
