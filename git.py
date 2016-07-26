@@ -46,14 +46,13 @@ def _checkRepo(repoLocalPath):
         print green('Verify repo in ' + repoLocalPath)
 
         remoteName = local('git remote', capture=True)
-        remoteURL = local('git remote get-url ' + remoteName, capture=True)
 
         filesStatusRawInfo = _getFilesStatusInformation()
         print green('Verify local files status against current HEAD commit...')
         nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName)
 
         localBranchesRawInfo = _getLocalBranchesInformation()
-        print green('Verify local branches exist on remote "' + remoteName + '" (URL: ' + remoteURL + ')...');
+        print green('Verify local branches exist on remote "' + remoteName + '"...');
         nbWarnings += _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName)
 
         print green('Verify branches status against remote...');
@@ -79,15 +78,6 @@ def _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName):
                 '??': 'is not indexed.',
             }.get(fileStatusData[0], 'is in an unknown state (' + fileStatusData[0] + ')'))
 
-    if (nbWarnings > 0):
-        if (confirm(red('There are many files to be commited. Do you want to stage and commit these files?'), default=False)):
-            local('git add ' + ' '.join(addableFiles))
-            local('git commit -m "Automatic commit by Drupalizer: ' + time.strftime("%Y-%m-%d %H:%M:%S") +'"')
-            branchName = local('git name-rev --name-only HEAD', capture=True)
-            local('git push ' + remoteName + ' ' + branchName)
-            # Do not alert with diff as it has been commited and pushed
-            nbWarnings = 0
-
     return nbWarnings
 
 def _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName):
@@ -100,12 +90,13 @@ def _checkLocalBranchesExistOnRemote(localBranchesRawInfo, remoteName):
             pushableBranches.append(localBranchName)
             print yellow('Local branch "' + localBranchName + '" is not present on "' + remoteName + '" remote.')
 
-    if (nbWarnings > 0):
-        if (confirm(red('There are many local branches not present on remote. Do you want to sync theses?'), default=False)):
-            for branchName in pushableBranches:
-                local('git push ' + remoteName + ' ' + branchName)
-            # Do not alert with diff as it has been commited and pushed
-            nbWarnings = 0
+    # TO DO : PUSHER LA BRANCHE SUR LE REPO
+    # if (nbWarnings > 0):
+    #     if (confirm(red('There are many local branches not present on remote. Do you want to sync theses?'), default=False)):
+    #         for branchName in pushableBranches:
+    #             local('git push ' + remoteName + ' ' + branchNqqqame)
+    #         # Do not alert with diff as it has been commited and pushed
+    #         nbWarnings = 0
 
     return nbWarnings
 
@@ -116,6 +107,9 @@ def _checkLocalBranchesStatusVsRemote(localBranchesRawInfo, remoteName):
         if (pattern.match(localBranchRawInfo)):
             nbWarnings += 1
             print yellow('Local branch "' + _getBranchName(localBranchRawInfo) + '" is ahead of remote branch.');
+
+    # TO DO : PUSHER LA BRANCHE SUR LE REPO
+
     return nbWarnings
 
 def _getLocalBranchesInformation():
