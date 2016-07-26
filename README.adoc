@@ -32,7 +32,7 @@ Those are global project parameters mandatory to Drupalizer.
 |Project root directory.
 
 |_interactive_mode_
-|If false, no prompt. Useful for Jenkins.
+|If False, no prompt. Useful for Jenkins.
 
 |_locale_
 |If True, install the site in French.

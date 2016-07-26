@@ -7,7 +7,8 @@ from .environments import e
 
 from fabric.api import task, env, execute
 
-import helpers as h
+from fabric.colors import red
+from fabric.contrib.console import confirm
 
 @task
 def init():
