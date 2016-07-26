@@ -6,6 +6,8 @@ This project adheres to http://semver.org/[Semantic Versioning].
 
 == [Unreleased]
 
+* Add a "tags" argument to the "test" command in order to limit which scenarios are run by behat.
+
 === Fixed
 
 * Site name can now have whitespaces without breaking the shell execution string

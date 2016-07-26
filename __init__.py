@@ -25,16 +25,19 @@ def init():
 
 
 @task
-def test():
+def test(tags=''):
     """
     Setup Behat and run the complete tests suite. Default output formatters: pretty and JUnit.
     The JUnit report file is specified in the Behat configuration file. Default: tests/behat/out/behat.junit.xml.
 
-    :param tag Specific Behat tests tags to run.
+    :param tags Specific Behat tests tags to run.
 
     """
     execute(behat.init)
-    execute(behat.run)
+    if not tags:
+      execute(behat.run)
+    else:
+      execute(behat.run, tags='{}'.format(tags))
 
 
 
