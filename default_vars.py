@@ -27,6 +27,7 @@ env.site_hostname = ''
 env.site_admin_user = 'admin'
 env.site_admin_pass = 'admin'
 env.site_subdir = 'default'
+env.site_languages = 'fr'
 
 
 # PatternLab
