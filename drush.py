@@ -51,10 +51,10 @@ def make(action='install'):
         h.update_profile()
 
     if not env.get('interactive_mode', True):
-        drush_opts += "--translations=fr "
-    elif confirm(red('Say [Y] to {} the site at {} with the French translation, if you say [n] '
-                     'the site will be installed in English only'.format(action, env.site_root))):
-        drush_opts += "--translations=fr "
+        drush_opts += "--translations=" + env.site_languages + " "
+    elif confirm(red('Say [Y] to {} the site at {} with the specified translation(s): {}. If you say [n] '
+                     'the site will be installed in English only'.format(action, env.site_root, env.site_languages))):
+        drush_opts += "--translations=" + env.site_languages + " "
 
     if env.get('interactive_mode', True):
         drush_opts += " --working-copy --no-gitinfofile"
