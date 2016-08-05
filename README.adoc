@@ -31,8 +31,9 @@ Those are global project parameters mandatory to Drupalizer.
 |_workspace_
 |Project root directory.
 
-|_interactive_mode_
-|If False, no prompt. Useful for Jenkins.
+|_always_use_pty_
+|This env var is defined by Fabric itself, and it's defaut value is True.
+|You can easily pass it to False, addinf --no-pty to your fab command line. Useful in Jenkins jobs.
 
 |_locale_
 |If True, install the site in French.

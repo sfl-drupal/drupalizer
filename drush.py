@@ -37,7 +37,7 @@ def make(action='install'):
     Build the platform by running the Makefile specified in the local_vars.py configuration file.
     """
 
-    if env.get('interactive_mode', True):
+    if env.get('always_use_pty', True):
       if (isGitDirty()):
         if (not confirm(red('There are warnings on status of your repositories. '
                         'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
@@ -50,13 +50,13 @@ def make(action='install'):
         drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
         h.update_profile()
 
-    if not env.get('interactive_mode', True):
+    if not env.get('always_use_pty', True):
         drush_opts += "--translations=" + env.site_languages + " "
     elif confirm(red('Say [Y] to {} the site at {} with the specified translation(s): {}. If you say [n] '
                      'the site will be installed in English only'.format(action, env.site_root, env.site_languages))):
         drush_opts += "--translations=" + env.site_languages + " "
 
-    if env.get('interactive_mode', True):
+    if env.get('always_use_pty', True):
         drush_opts += " --working-copy --no-gitinfofile"
     if not h.fab_exists('local', env.site_root):
         h.fab_run('local', "mkdir {}".format(env.site_root))
