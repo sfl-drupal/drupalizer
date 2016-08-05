@@ -49,7 +49,7 @@ def _checkRepo(repoLocalPath):
 
         filesStatusRawInfo = _getFilesStatusInformation()
         print green('Verify local files status against current HEAD commit...')
-        nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName)
+        nbWarnings += _checkFilesStatusVsHeadCommit(filesStatusRawInfo)
 
         localBranchesRawInfo = _getLocalBranchesInformation()
         print green('Verify local branches exist on remote "' + remoteName + '"...');
@@ -61,7 +61,7 @@ def _checkRepo(repoLocalPath):
         return nbWarnings
 
 
-def _checkFilesStatusVsHeadCommit(filesStatusRawInfo, remoteName):
+def _checkFilesStatusVsHeadCommit(filesStatusRawInfo):
     nbWarnings = 0
     addableFiles = []
     if (len(filesStatusRawInfo) > 0):
