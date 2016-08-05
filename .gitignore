@@ -6,3 +6,6 @@ local_vars.py
 
 # Ignore IDES folders
 .idea
+
+# Ignore Sonar generated dir
+/.sonar/
