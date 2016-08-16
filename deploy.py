@@ -217,7 +217,7 @@ def migrate(environment):
     if _is_aegir_deployment(target):
         # Deploy to Aegir server.
         platform = _aegir_platform_name(target, environment)
-        if env.get('migrate_sites', "false") == "true":
+        if env.get('migrate', "false") == "true":
             _aegir_migrate_sites(target, environment, platform)
 
         if env.get('remove_platforms', "false") == "true":
