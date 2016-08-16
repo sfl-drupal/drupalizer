@@ -20,7 +20,7 @@ All those variables are loaded as Fabric environment variables.
 
 === Project settings
 
-Those are global project parameters needed by Drupalizer.
+Those are global project parameters mandatory to Drupalizer.
 
 |===
 |Parameters |Description
