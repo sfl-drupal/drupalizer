@@ -4,7 +4,6 @@ from fabric.colors import red, green
 
 import helpers as h
 
-
 ###########################################################
 # Helper functions to manage docker images and containers #
 ###########################################################
