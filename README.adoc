@@ -87,6 +87,9 @@ Those are global project parameters mandatory to Drupalizer.
 |_site_subdir_
 |The Drupal site directory (only for multisite). Default: _default_.
 
+|_site_languages_
+|Translation files you need to download when building new Drupal installation (separate with comma). Default: _fr_.
+
 |===
 
 === Patternlab settings
