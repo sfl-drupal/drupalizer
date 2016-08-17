@@ -25,6 +25,7 @@ import helpers as h
 import os
 import glob
 
+
 def _set_hosts(environment):
     """
     Set the hosts Fabric environment variable with the target environment.

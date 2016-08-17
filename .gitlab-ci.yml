@@ -1,0 +1,4 @@
+health-check:
+  script:
+    - fab --version
+    - fab -f . --list-format=nested --list
