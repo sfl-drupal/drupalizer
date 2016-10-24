@@ -46,9 +46,12 @@ def make(action='install'):
     drush_opts = "--prepare-install " if action != 'update' else ''
 
     # Update profile codebase
-    if env.site_profile and env.site_profile != '' and not h.is_core_profile(env.site_profile):
-        drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
-        h.update_profile()
+    if env.site_profile and env.site_profile != '':
+	if h.is_core_profile(env.site_profile):
+            drush_opts += "--contrib-destination=sites/all "
+	else :
+            drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
+            h.update_profile()
 
     if not env.get('always_use_pty', True):
         drush_opts += "--translations=" + env.site_languages + " "
@@ -119,13 +122,17 @@ def site_install():
     site_admin_name = env.site_admin_user
     site_admin_pass = env.site_admin_pass
     site_subdir = env.site_subdir
+    base_url = env.site_hostname
 
     # Create first the database if necessary
     h.init_db('docker')
 
     with h.fab_cd(role, site_root):
         locale = '--locale="fr"' if env.locale else ''
-
+        # Drupal 8 only
+        h.fab_run(role, 'cp sites/example.sites.php sites/sites.php')
+        h.fab_run(role, 'composer install')
+        # end D8
         h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name="{}" '
                         '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
                                                                                           db_user, db_pass,
@@ -133,7 +140,12 @@ def site_install():
                                                                                           site_admin_name,
                                                                                           site_admin_pass,
                                                                                           site_subdir))
-
+        # Drupal 8 only
+        h.fab_run(role, 'cp core/phpunit.xml.dist core/phpunit.xml')
+        h.fab_run(role, "sed -i 's@<env name=\"SIMPLETEST_BASE_URL\" value=\"\"/>@<env name=\"SIMPLETEST_BASE_URL\" value=\"http://{}\"/>@g' core/phpunit.xml".format(base_url))
+        h.fab_run(role, "sed -i 's@<env name=\"SIMPLETEST_DB\" value=\"\"/>@<env name=\"SIMPLETEST_DB\" value=\"mysql://{}:{}\@{}/{}\"/>@g' core/phpunit.xml".format(db_user, db_pass, db_host, db_name))
+        h.fab_run(role, "sed -i 's@<env name=\"BROWSERTEST_OUTPUT_DIRECTORY\" value=\"\"/>@<env name=\"BROWSERTEST_OUTPUT_DIRECTORY\" value=\"/tmp\"/>@g' core/phpunit.xml")
+        # end D8
         print(green('Site installed successfully!'))
 
         # Import db_dump if it exists.

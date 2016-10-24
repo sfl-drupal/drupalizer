@@ -12,7 +12,7 @@ def init(rewrite=True):
     :param role Default 'role' where to run the task
     :param rewrite If the behat.yml file should be rewrited or not.
     """
-    
+
     role = 'docker'
     workspace = env.docker_workspace
     host = env.site_hostname
