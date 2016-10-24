@@ -46,7 +46,7 @@ def make(action='install'):
     drush_opts = "--prepare-install " if action != 'update' else ''
 
     # Update profile codebase
-    if env.site_profile and env.site_profile != '':
+    if env.site_profile and env.site_profile != '' and not h.is_core_profile(env.site_profile):
         drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
         h.update_profile()
 
@@ -62,6 +62,7 @@ def make(action='install'):
         h.fab_run('local', "mkdir {}".format(env.site_root))
     with h.fab_cd('local', env.site_root):
         h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
+
 
 @task
 @roles('local')

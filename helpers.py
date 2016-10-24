@@ -47,7 +47,15 @@ env.roledefs['local'] = ["{}@{}".format(user_name, host_name)]
 env.roledefs['docker'] = ["root@{}".format(env.container_ip)]
 
 env.builddir = path.join(env.workspace, 'build')
-env.makefile = path.join(env.builddir, env.site_profile, env.site_profile_makefile)
+
+def is_core_profile(profile_name):
+    return profile_name in ( 'minimal', 'standard', 'testing' )
+
+
+if is_core_profile(env.site_profile):
+  env.makefile = path.join(env.builddir, env.site_profile_makefile)
+else:
+  env.makefile = path.join(env.builddir, env.site_profile, env.site_profile_makefile)
 env.site_drush_aliases = path.join(env.site_root, 'sites/all/drush')
 
 def fab_run(role="local", cmd="", capture=False):
