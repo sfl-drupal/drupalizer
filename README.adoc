@@ -35,9 +35,6 @@ Those are global project parameters mandatory to Drupalizer.
 |This env var is defined by Fabric itself, and it's defaut value is True.
 |You can easily pass it to False, addinf --no-pty to your fab command line. Useful in Jenkins jobs.
 
-|_locale_
-|If True, install the site in French.
-
 |===
 
 === Site settings
@@ -88,7 +85,7 @@ Those are global project parameters mandatory to Drupalizer.
 |The Drupal site directory (only for multisite). Default: _default_.
 
 |_site_languages_
-|Translation files you need to download when building new Drupal installation (separate with comma). Default: _fr_.
+|Translation files that must be downloaded when building Drupal and activate during installation (separate with comma, the first one will be the default site language). Default: _fr_.
 
 |===
 
@@ -107,20 +104,18 @@ Those are global project parameters mandatory to Drupalizer.
 |===
 |Parameters |Description
 
-|_docker_workspace_
-|The Docker workspace. Default: _/opt/sfl_
+|_code_workspace_
+|The Docker workspace. Default: _/var/www/html_
 
-|_docker_site_root_
-|Drupal root in the Docker container. Default: _/opt/sfl/src/drupal_.
+|_code_site_root_
+|Drupal root in the Docker container. Default: _/var/www/html/src/drupal_.
 
-|bind_port
-|The Docker port. Default: _8001_.
+|_local_userid_
+|The id of your local user to fix the permissions in the container.
 
-|_apache_user_
-|The user running Apache in the Docker container. Default: _www-data_.
+|_apache_userid
+|The user running Apache in the Docker container.
 
-|_container_ip_
-|Docker auto-added container IP. **Do not edit**.
 
 |===
 
@@ -188,12 +183,12 @@ Some more atomic tasks supported by *Drupalizer* would be:
 
 * _Start/stop_ the Docker container:
 
- $ fab docker.container_start
- $ fab docker.container_stop
+ $ fab docker.composer_up
+ $ fab docker.composer_down
 
  * _Bash_ into the Docker container:
 
-  $ fab docker.connect
+  $ fab docker.connect:service=php
 
 * _Run_ the Behat tests (without configure):
 

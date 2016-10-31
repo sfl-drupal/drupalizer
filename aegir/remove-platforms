@@ -1,0 +1,23 @@
+#!/usr/local/bin/drush @hostmaster
+<?php
+//Drush script to remove old platforms from command line
+// This script should be placed into the aegir home in the hostmaster server
+//Provide target platform name from the command line
+
+//Get old and new platform name to migrate sites
+$old_platform_name = drush_shift();
+$new_platform_name = drush_shift();
+
+// Find the platforms to remove
+$sql = "SELECT n.nid, n.title FROM hosting_platform AS p " .
+       "INNER JOIN node AS n ON (p.nid=n.nid) LEFT JOIN hosting_site AS s ON (p.nid=s.platform) " .
+       "WHERE s.platform IS NULL " .
+       "AND n.title LIKE '%$old_platform_name%' AND n.title <> '$new_platform_name' AND p.status = 1";
+
+// Remove all not used platforms
+$result = db_query($sql);
+foreach($result as $row) {
+    watchdog('hostmaster', 'Platform ' . $row->nid . ' will be deleted.');
+    drush_log('Platform ' . $row->title . ' will be deleted.');
+    hosting_add_task($row->nid, 'delete');
+}

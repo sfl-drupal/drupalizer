@@ -6,16 +6,28 @@ This project adheres to http://semver.org/[Semantic Versioning].
 
 == [Unreleased]
 
-* Add a "tags" argument to the "test" command in order to limit which scenarios are run by behat.
-
-=== Fixed
-
-* Site name can now have whitespaces without breaking the shell execution string
-
-=== Added
-
-* Add a Patternlab command to build the static style guide: `fab patternlab.build`.
-* Add a Git command to verify repositories states and warn user if changes might be lost.
+* Use Docker4Drupal instead our own base image.
+* Use Docker Compose to run docker commands instead docker directly, so
+almost every fab docker.* task has changed, use fab --list to see new tasks.
+* Add a fix permissions task to set the owner and groups of files
+dynamically using the current user and the web server user in the container.
+* Add a task to clean the src/drupal avoiding permissions problems.
+* Add ruamel.yml like a dependency to the project to inspect the defined
+services in the docker-compose.yml
+* Change the test package to load and run differents tests modules dynamically.
+* Add a "tags" argument to the "test" command in order to limit which
+scenarios are run.
+* Changes in the config files structure, you must copy local_vars.py and
+rewrite the conf/drupalizer.py
+* Several PEP8 corrections.
+* Add aegir folder with the drush migrate-sites and remove-platform scripts
+that should be placed in the aegir home in the hostmaster server.
+* Site name can now have whitespaces without breaking the shell execution
+string
+* Add a Patternlab command to build the static style guide: `fab patternlab
+.build`.
+* Add a Git command to verify repositories states and warn user if changes
+might be lost.
 
 == 2.0.0 - 2016/05/09
 

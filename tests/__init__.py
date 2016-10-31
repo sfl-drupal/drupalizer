@@ -15,16 +15,42 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from fabric.api import task
+from importlib import import_module
+from fabric.api import task, execute
 
 from fabfile.core import *
 
 
 @task
-def build():
+def init(rw=True):
     """
-    Generate the PatternLab static site
+    Initialize tests engines.
+    :param rw If the config file should be rewrited or not.
     """
-    with lcd(env.patternlab_dir):
-        local('touch public/styleguide/html/styleguide.html')
-        local('php core/builder.php -g')
+    modules = map(__import__, env.test_engines)
+    for test_mod in modules:
+        execute(test_mod.init, rw=rw)
+
+
+@task
+def install():
+    """
+    Install tests engines
+    """
+    modules = map(__import__, env.test_engines)
+    for test_mod in modules:
+        execute(test_mod.install)
+
+
+@task
+def run(pattern=''):
+    """
+    Execute the complete tests suite.
+    :param pattern: Filter the tests using this pattern.
+    """
+    modules = map(import_module, env.test_engines)
+    for test_mod in modules:
+        if pattern:
+            execute(test_mod.run, pattern=pattern)
+        else:
+            execute(test_mod.run)

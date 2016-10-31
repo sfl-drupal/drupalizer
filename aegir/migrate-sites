@@ -1,0 +1,60 @@
+#!/usr/local/bin/drush @hostmaster
+<?php
+// Drush script to migrate a site from the command line.
+// This script should be placed into the aegir home in the hostmaster server
+// Provide site name and target platform name from the command line
+
+// Get old and new platform name to migrate sites
+$old_platform_name = drush_shift();
+$new_platform_name = drush_shift();
+
+// Lookup platform // CLEANER REQUEST NEED
+$sql = "SELECT nid FROM node where title = '$new_platform_name' AND type = 'platform'";
+$result = db_query($sql);
+foreach ($result as $row) {
+  $new_platform_nid = $row->nid;
+}
+if (!$new_platform_nid) {
+  drush_set_error('INVALID_PLATFORM', "Specified target platform cannot be found");
+  exit();
+}
+
+// Confirm if platform is online, if not, wait
+$timeout = 600;
+$online = FALSE;
+$start_time = time();
+while (!$online) {
+  //Get platform readiness // CLEANER REQUEST NEED
+  $sql = "SELECT status FROM hosting_platform WHERE nid = '$new_platform_nid' AND status = 1";
+  $result = db_query($sql);
+  foreach ($result as $row) {
+      $online = $row->status;
+    }
+  //If we're not yet online, sleep for 15 seconds, unless we've already hit our timeout
+  if (!$online) {
+    if (time() - $start_time > $timeout) {
+      drush_set_error('PLATFORM_TIMEOUT', "Target migration platform was not ready within timeout period of $timeout seconds");
+      exit();
+    }
+    sleep(15);
+  }
+}
+
+// Find the sites in the old platform
+$sql = "SELECT n.nid, n.title, s.db_server FROM node AS n " .
+       "INNER JOIN hosting_site AS s ON (n.nid=s.nid) " .
+       "INNER JOIN hosting_platform AS p ON (s.platform=p.nid) " .
+       "WHERE p.publish_path LIKE '%$old_platform_name%' AND p.publish_path <> '%$new_platform_name'";
+
+// Migrate sites in the old platform to the new one
+$result = db_query($sql);
+foreach ($result as $row) {
+  //Platform must be online, so we can continue with the migrate
+  watchdog('hostmaster', 'Site ' . $row->title . ' will be migrate to Platform ' . $new_platform_name);
+  drush_log('Site ' . $row->title . ' will be migrate to Platform ' . $new_platform_name);
+  hosting_add_task($row->nid, 'migrate', array(
+    'target_platform' => $new_platform_nid,
+    'new_uri' => $row->title,
+    'new_db_server' => $row->db_server,
+  ));
+}

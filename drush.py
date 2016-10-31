@@ -15,104 +15,94 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-from __future__ import unicode_literals
-from fabric.api import task, roles, env
-from fabric.contrib.console import confirm
-from fabric.colors import red, green
-from fabric.utils import abort
-
 from datetime import datetime
 
-import helpers as h
-import core as c
+from fabric.api import task
+from fabric.colors import red
 
-from git import isGitDirty
+from fabfile.core import *
+from fabfile.git import is_git_dirty
 
 
-@task(alias='make')
-@roles('local')
+@task
 def make(action='install'):
     """
-    Build the platform by running the Makefile specified in the local_vars.py configuration file.
+    Build the platform by running the Makefile specified in the local_vars.py
+     configuration file.
     """
-
     if env.get('always_use_pty', True):
-      if (isGitDirty()):
-        if (not confirm(red('There are warnings on status of your repositories. '
-                        'Do you want to continue and reset all changes to remote repositories'' states?'), default=False)):
-          abort('Aborting "drush {}" since there might be a risk of loosing local data.'.format(action))
+        if is_git_dirty():
+            if not confirm(red('There are warnings on status of your '
+                               'repositories. Do you want to continue and '
+                               'reset all changes to remote repositories '
+                               'states?'), default=False):
+                abort('Aborting "drush {}" since there might be a risk of '
+                      'loosing local data.'.format(action))
 
     drush_opts = "--prepare-install " if action != 'update' else ''
 
     # Update profile codebase
-    if env.site_profile and env.site_profile != '':
-	if h.is_core_profile(env.site_profile):
-            drush_opts += "--contrib-destination=sites/all "
-	else :
-            drush_opts += "--contrib-destination=profiles/{} ".format(env.site_profile)
-            h.update_profile()
+    if env.site_profile and not is_core_profile(env.site_profile):
+        update_profile()
 
-    if not env.get('always_use_pty', True):
-        drush_opts += "--translations=" + env.site_languages + " "
-    elif confirm(red('Say [Y] to {} the site at {} with the specified translation(s): {}. If you say [n] '
-                     'the site will be installed in English only'.format(action, env.site_root, env.site_languages))):
-        drush_opts += "--translations=" + env.site_languages + " "
+    if env.site_languages:
+        if not env.get('always_use_pty', True):
+            drush_opts += "--translations={} ".format(env.site_languages)
+        elif confirm(red('Say [Y] to {} the site at {} with the specified '
+                         'translation(s): {}. If you say [n] the site will be '
+                         'installed in English only'
+                         ''.format(action, env.site_root,
+                                   env.site_languages))):
+            drush_opts += "--translations= {} ".format(env.site_languages)
 
     if env.get('always_use_pty', True):
         drush_opts += " --working-copy --no-gitinfofile"
-    if not h.fab_exists('local', env.site_root):
-        h.fab_run('local', "mkdir {}".format(env.site_root))
-    with h.fab_cd('local', env.site_root):
-        h.fab_run('local', 'drush make {} {} -y'.format(drush_opts, env.makefile))
+    if not os.path.exists(env.site_root):
+        local("mkdir {}".format(env.site_root))
+    with lcd(env.site_root):
+        dk_run(env.services['php'], user='root',
+               cmd='chown -R {}:{} .'.format(env.local_userid,
+                                             env.apache_userid))
+        local('drush make {} {} -y'.format(drush_opts, env.makefile))
+        fix_permissions()
 
 
 @task
-@roles('local')
 def aliases():
     """
     Copy conf/aliases.drushrc.php in the site environment.
     """
-
-    role = 'local'
     drush_aliases = env.site_drush_aliases
     workspace = env.workspace
 
-    if not h.fab_exists(role, drush_aliases):
-        h.fab_run(role, 'mkdir {}'.format(drush_aliases))
-    with h.fab_cd(role, drush_aliases):
-        # Create aliases
-        if h.fab_exists(role, '{}/aliases.drushrc.php'.format(drush_aliases)):
-            h.fab_run(role, 'rm {}/aliases.drushrc.php'.format(drush_aliases))
-        h.fab_run(role, 'cp {}/conf/aliases.drushrc.php .'.format(workspace))
+    if not os.path.exists(drush_aliases):
+        local('mkdir {}'.format(drush_aliases))
 
-    print(green('Drush aliases have been copied to {} directory.'.format(drush_aliases)))
+    if os.path.exists('{}/aliases.drushrc.php'.format(drush_aliases)):
+        local('rm {}/aliases.drushrc.php'.format(drush_aliases))
+    local('cp {}/conf/aliases.drushrc.php {}/'.format(workspace,
+                                                      drush_aliases))
+    print(green('Drush aliases have been copied to {} directory.'
+                ''.format(drush_aliases)))
 
 
 @task
-@roles('docker')
 def updatedb():
     """
     Run the available database updates. Similar to drush updatedb.
     """
-
-    role = 'docker'
-
-    with h.fab_cd(role, env.docker_site_root):
-        h.fab_run(role, 'drush updatedb -y')
-        h.hook_execute(env.hook_post_update, role)
+    service = env.services['php']
+    dk_run(service, cmd='drush updatedb -y')
+    hook_execute(env.hook_post_update, service)
 
 
 @task
-@roles('docker')
 def site_install():
     """
     Run the site installation procedure.
     """
 
-    role = 'docker'
-    site_root = env.docker_site_root
-    apache = env.apache_user
+    service = env.services['php']
     profile = env.site_profile
     db_user = env.site_db_user
     db_pass = env.site_db_pass
@@ -122,74 +112,117 @@ def site_install():
     site_admin_name = env.site_admin_user
     site_admin_pass = env.site_admin_pass
     site_subdir = env.site_subdir
-    base_url = env.site_hostname
 
-    # Create first the database if necessary
-    h.init_db('docker')
+    locale = ''
+    if env.site_languages:
+        locale = '--locale="{}"'.format(env.site_languages.split(',')[0])
 
-    with h.fab_cd(role, site_root):
-        locale = '--locale="fr"' if env.locale else ''
-        # Drupal 8 only
-        h.fab_run(role, 'cp sites/example.sites.php sites/sites.php')
-        h.fab_run(role, 'composer install')
-        # end D8
-        h.fab_run(role, 'sudo -u {} drush site-install {} {} --db-url=mysql://{}:{}@{}/{} --site-name="{}" '
-                        '--account-name={} --account-pass={} --sites-subdir={} -y'.format(apache, profile, locale,
-                                                                                          db_user, db_pass,
-                                                                                          db_host, db_name, site_name,
-                                                                                          site_admin_name,
-                                                                                          site_admin_pass,
-                                                                                          site_subdir))
-        # Drupal 8 only
-        h.fab_run(role, 'cp core/phpunit.xml.dist core/phpunit.xml')
-        h.fab_run(role, "sed -i 's@<env name=\"SIMPLETEST_BASE_URL\" value=\"\"/>@<env name=\"SIMPLETEST_BASE_URL\" value=\"http://{}\"/>@g' core/phpunit.xml".format(base_url))
-        h.fab_run(role, "sed -i 's@<env name=\"SIMPLETEST_DB\" value=\"\"/>@<env name=\"SIMPLETEST_DB\" value=\"mysql://{}:{}\@{}/{}\"/>@g' core/phpunit.xml".format(db_user, db_pass, db_host, db_name))
-        h.fab_run(role, "sed -i 's@<env name=\"BROWSERTEST_OUTPUT_DIRECTORY\" value=\"\"/>@<env name=\"BROWSERTEST_OUTPUT_DIRECTORY\" value=\"/tmp\"/>@g' core/phpunit.xml")
-        # end D8
-        print(green('Site installed successfully!'))
+    dk_run(service, user='root',
+           cmd='chown -R {}:{} .'.format(env.apache_userid, env.local_userid))
+    if env.drupal_version == 8:
+        dk_run(service, cmd='composer install')
 
-        # Import db_dump if it exists.
-        if 'db_dump' in env and env.db_dump is not False:
-            c.db_import(env.db_dump, role)
+    dk_run(
+        service,
+        cmd="drush site-install {} {} --db-url=mysql://{}:{}@{}/{} "
+            "--site-name='{}' --account-name={} --account-pass={} "
+            "--sites-subdir={} -y"
+            "".format(profile, locale, db_user, db_pass, db_host, db_name,
+                      site_name, site_admin_name, site_admin_pass, site_subdir)
+    )
+    fix_permissions()
 
-    h.hook_execute(env.hook_post_install, role)
+    print(green('Site installed successfully!'))
+
+    # Import db_dump if it exists.
+    if 'db_dump' in env and env.db_dump is not False:
+        import_dump(env.db_dump, service=env.services['db_server'])
+
+    hook_execute(env.hook_post_install, service)
 
 
 @task
-@roles('docker')
-def archive_dump(role='docker'):
+def fix_permissions():
+    """
+    Securing file permissions and ownership
+    """
+    fix_files_owner_and_permissions()
+
+
+@task
+def archive_dump(service=env.services['php']):
     """
     Archive the platform for release or deployment.
-    :param role Default 'role' where to run the task
+    :param service Default 'service' where to run the task
     """
+    platform = '{}-{}.tar.gz'.format(env.project_name,
+                                     datetime.now().strftime('%Y%m%d_%H%M%S'))
+    dk_run(service, user=env.local_userid,
+           cmd='rm -f {}/build/*.tar.gz'.format(env.code_workspace))
+    print(green('All tar.gz archives found in {}/build have been deleted.'
+                ''.format(env.code_workspace)))
 
-    with h.fab_cd(role, env.docker_site_root):
-        platform = '{}-{}.tar.gz'.format(env.project_name, datetime.now().strftime('%Y%m%d_%H%M%S'))
-        h.fab_run(role, 'rm -f {}/build/*.tar.gz'.format(env.docker_workspace))
-        print(green('All tar.gz archives found in {}/build have been deleted.'.format(env.docker_workspace)))
-
-        h.fab_run(
-            role,
-            'drush archive-dump --destination={}/build/{} --tags="sflinux {}" --generatorversion="2.x" '
-            '--generator="Drupalizer::fab drush.archive_dump" --tar-options="--exclude=.git"'
-            ''.format(env.docker_workspace, platform, env.project_name)
-        )
+    dk_run(
+        service,
+        user=env.local_userid,
+        cmd="drush archive-dump --destination={}/build/{} --tags='sflinux {}' "
+            "--generatorversion='3.x' "
+            "--generator='Drupalizer::fab drush.archive_dump' "
+            "--tar-options='--exclude=.git'"
+            "".format(env.code_workspace, platform, env.project_name)
+    )
 
 
 @task
-@roles('docker')
-def gen_doc(role='docker'):
+def gen_doc(service=env.services['php']):
     """
     Generate README file
-    :param role Default 'role' where to run the task
+    :param service Default 'service' where to run the task
     """
+    if os.path.exists('{}/README.adoc'.format(env.code_workspace)):
+        dk_run(service, user=env.local_userid,
+               cmd='asciidoctor -d book -b html5 -o {}/README.html '
+                   '{}/README.adoc'.format(env.code_workspace,
+                                           env.code_workspace))
+        print(green('README.html generated in {}'.format(env.code_workspace)))
 
-    if h.fab_exists(role, '{}/README.adoc'.format(env.docker_workspace)):
-        h.fab_run(role, 'asciidoctor -d book -b html5 -o {}/README.html {}/README.adoc'.
-                  format(env.docker_workspace, env.docker_workspace))
-        print(green('README.html generated in {}'.format(env.docker_workspace)))
+    if os.path.exists('{}/CHANGELOG.adoc'.format(env.code_workspace)):
+        dk_run(service, user=env.local_userid,
+               cmd='asciidoctor -d book -b html5 -o {}/CHANGELOG.html '
+                   '{}/CHANGELOG.adoc'.format(env.code_workspace,
+                                              env.code_workspace))
+        print(green('CHANGELOG.html generated in {}'
+                    ''.format(env.code_workspace)))
 
-    if h.fab_exists(role, '{}/CHANGELOG.adoc'.format(env.docker_workspace)):
-        h.fab_run(role, 'asciidoctor -d book -b html5 -o {}/CHANGELOG.html {}/CHANGELOG.adoc'.
-                  format(env.docker_workspace, env.docker_workspace))
-        print(green('CHANGELOG.html generated in {}'.format(env.docker_workspace)))
+
+@task
+def export_dump():
+    """
+    Import and restore the specified database dump.
+    :param dump: a full path to a gzipped sql dump.
+    """
+    dump = '{}/build/{}.sql'.format(env.code_workspace, env.project_name)
+    if os.path.exists(dump):
+        local('rm {}'.format(dump))
+    dk_run(env.services['php'], user=env.local_userid,
+           cmd='drush sql-dump > {}'.format(dump))
+    print(green('Database dump successfully exported.'))
+
+
+@task
+def import_dump(dump=False):
+    """
+    Import and restore the specified database dump.
+    :param dump: name of sql dump inside build/.
+    """
+    if dump:
+        dump = '{}/{}'.format(env.builddir, dump)
+    else:
+        dump = '{}/{}.sql'.format(env.builddir, env.project_name)
+    if os.path.exists(dump):
+        dump = '{}/build/{}.sql'.format(env.code_workspace, env.project_name)
+        dk_run(env.services['php'], user=env.local_userid,
+               cmd="drush sql-cli < {}".format(dump))
+        print(green('Database dump successfully restored.'))
+    else:
+        print(red('Could not find database dump at {}'.format(dump)))
