@@ -1,19 +1,21 @@
 stages:
   - test
   - quality
+
 health-check:
-  image: python:3.5
+  image: python:2.7
   stage: test
   script:
     - pip install fabric ruamel.yaml
     - fab --version
     - fab -f . --list-format=nested --list
   tags:
-    - docker-images
+    - docker-generic
+
 sonarqube:
   image: ntdt/sonar-scanner:2.7
   stage: quality
   script:
     - cd $CI_PROJECT_DIR && /opt/sonar-scanner/bin/sonar-scanner -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_TOKEN
   tags:
-    - docker-images
+    - docker-generic
