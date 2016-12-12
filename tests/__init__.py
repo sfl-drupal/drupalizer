@@ -18,7 +18,7 @@
 from importlib import import_module
 from fabric.api import task, execute
 
-from fabfile.core import *
+from ..core import *
 
 
 @task

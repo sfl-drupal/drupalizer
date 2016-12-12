@@ -17,8 +17,7 @@
 #
 from fabric.decorators import task
 
-from fabfile.core import *
-from fabfile.drush import fix_permissions
+from ..core import *
 
 
 @task

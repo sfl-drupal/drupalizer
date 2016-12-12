@@ -17,7 +17,7 @@
 #
 from fabric.decorators import task
 
-from fabfile.core import *
+from ..core import *
 
 
 @task
