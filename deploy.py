@@ -184,9 +184,9 @@ def _rsync_platform(target, target_directory):
     Helper function to rsync platform to server.
     """
     local('rsync -a --exclude sites/*/settings.php --exclude sites/*/files '
-          'src/drupal/ {}@{}:{}'.format(target.get('user'),
-                                        target.get('host'),
-                                        target_directory))
+          '--delete src/drupal/ {}@{}:{}'.format(target.get('user'),
+                                                 target.get('host'),
+                                                 target_directory))
 
 
 def _aegir_provision_platform(platform, aegir_path, aegir_destsrv):

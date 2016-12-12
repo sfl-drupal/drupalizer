@@ -32,14 +32,28 @@ env.locale = False
 
 # Get info of the current docker-compose services.
 # Services see docker-compose.yml
-with open('{}/docker-compose.yml'.format(env.workspace), 'r') as stream:
-    try:
-        config = yaml.load(stream, Loader=yaml.Loader)
-        env.services = {}
-        for service in config['services']:
-            env.services[service] = service
-    except yaml.YAMLError as e:
-        print(e)
+try:
+    env.services = {}
+    with open('{}/docker-compose.yml'.format(env.workspace), 'r') as stream:
+        try:
+            config = yaml.load(stream, Loader=yaml.Loader)
+            for service in config['services']:
+                env.services[service] = service
+        except yaml.YAMLError as e:
+            print(e)
+except IOError as e:
+    # Initialize the env.services with default values so drupalizer don't fail
+    # when listing available commands.
+    env.services = {
+        'db_server': 'db_server',
+        'php': 'php',
+        'web_server': 'web_Server'
+    }
+    print(e)
+    print("ERROR: Drupalizer-3.x will not work without the "
+          "docker-compose.yml configuration file of your Drupal project. "
+          "\n\r **Drupalizer is used as a submodule to automatize task and "
+          "you cannot use it as a stand alone project.")
 
 
 # Site
