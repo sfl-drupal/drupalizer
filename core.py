@@ -24,11 +24,11 @@ from fabric.colors import green
 from fabric.contrib.console import confirm
 
 # Import default variables
-from fabfile.default_vars import *
+from .default_vars import *
 
 # Import local variables' overrides, if they exist
 if os.path.exists(os.path.join(os.path.dirname(__file__), 'local_vars.py')):
-    from fabfile.local_vars import *
+    from .local_vars import *
 
 
 # Other env variables

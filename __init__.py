@@ -17,12 +17,12 @@
 #
 from fabric.api import task, env, execute
 
-from fabfile import core
-from fabfile import docker
-from fabfile import deploy
-from fabfile import drush
-from fabfile import patternlab
-from fabfile import tests
+from . import core
+from . import docker
+from . import deploy
+from . import drush
+from . import patternlab
+from . import tests
 
 
 @task

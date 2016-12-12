@@ -18,7 +18,7 @@
 from fabric.colors import red, yellow
 from fabric.decorators import task
 
-from fabfile.core import *
+from .core import *
 
 
 @task()

@@ -20,8 +20,8 @@ from datetime import datetime
 from fabric.api import task
 from fabric.colors import red
 
-from fabfile.core import *
-from fabfile.git import is_git_dirty
+from .core import *
+from .git import is_git_dirty
 
 
 @task

@@ -31,7 +31,7 @@ def init():
     db_pass = env.site_db_pass
     db_host = env.site_db_host
     db_name = env.site_db_name
-    base_url = env.site_hostname
+    base_url = 'localhost'
 
     dk_run(service, user=env.local_userid,
            cmd='cp core/phpunit.xml.dist core/phpunit.xml')
