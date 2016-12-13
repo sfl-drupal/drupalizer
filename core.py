@@ -175,7 +175,8 @@ def fix_files_owner_and_permissions():
     """
     service = env.services['php']
     dk_run(service, user='root',
-           cmd='chown -R {}:{} .'.format(env.local_userid, env.apache_userid))
+           cmd='chown -R {}:{} ../../*'.format(env.local_userid,
+                                                  env.apache_userid))
     dk_run(service, user='root',
            cmd="find . -type d -exec chmod u=rwx,g=rx,o= '{}' \;")
     dk_run(service, user='root',

@@ -75,7 +75,12 @@ def run(pattern='~@wip&&~@disabled&&~@test'):
     service = env.services['php']
     workspace = env.code_workspace
 
-    dk_run(service, 'mkdir -p {}/logs/behat'.format(workspace))
+    dk_run(service, user='root',
+           cmd='mkdir -p {}/logs/behat'.format(workspace))
+    dk_run(service, user='root',
+           cmd='chown -R {}:{} {}/logs/behat'.format(env.apache_userid,
+                                                     env.local_userid,
+                                                     workspace))
     if not os.path.exists('../tests/behat/bin/behat'):
         install()
     if not os.path.exists('{}/tests/behat/behat.yml'.format(workspace)):
