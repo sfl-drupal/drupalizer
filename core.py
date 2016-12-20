@@ -129,13 +129,14 @@ def hook_execute(cmds=env.hook_post_install, service=env.services['php']):
         dk_run(service, cmd=cmd)
 
 
-def is_core_profile(profile_name):
+def is_custom_profile(profile_name):
     """
     Helper function to check if the profile is a core profile
     :param profile_name:
     :return:
     """
-    return profile_name in ('minimal', 'standard', 'testing')
+    return profile_name not in ('minimal', 'standard', 'testing',
+                                'config_installer')
 
 
 def remove_from_hosts(hostname):

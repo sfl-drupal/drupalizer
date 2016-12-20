@@ -42,7 +42,7 @@ def make(action='install'):
     drush_opts = "--prepare-install " if action != 'update' else ''
 
     # Update profile codebase
-    if env.site_profile and not is_core_profile(env.site_profile):
+    if env.site_profile_repo and is_custom_profile(env.site_profile):
         update_profile()
 
     if env.site_languages:
@@ -80,11 +80,13 @@ def aliases():
 
     if os.path.exists('{}/aliases.drushrc.php'.format(drush_aliases)):
         local('rm {}/aliases.drushrc.php'.format(drush_aliases))
-    local('cp {}/conf/aliases.drushrc.php {}/'.format(workspace,
-                                                      drush_aliases))
-    print(green('Drush aliases have been copied to {} directory.'
-                ''.format(drush_aliases)))
-
+    if os.path.exists('{}/conf/aliases.drushrc.php'.format(workspace)):
+        local('cp {}/conf/aliases.drushrc.php {}/'.format(workspace,
+                                                          drush_aliases))
+        print(green('Drush aliases have been copied to {} directory.'
+                    ''.format(drush_aliases)))
+    else:
+        print(green('Drush aliases have not been found'))
 
 @task
 def updatedb():
@@ -113,10 +115,14 @@ def site_install():
     site_admin_pass = env.site_admin_pass
     site_subdir = env.site_subdir
 
+    profile_opts = ''
     locale = ''
     if env.site_languages:
         locale = '--locale="{}"'.format(env.site_languages.split(',')[0])
-
+    if env.site_conf and env.site_profile == "config_installer":
+        profile_opts += " config_installer " \
+                      "config_installer_sync_configure_form.sync_directory=" \
+                      "{}".format(env.site_conf)
     dk_run(service, user='root',
            cmd='chown -R {}:{} .'.format(env.apache_userid, env.local_userid))
     if env.drupal_version == 8:
@@ -124,11 +130,12 @@ def site_install():
 
     dk_run(
         service,
-        cmd="drush site-install {} {} --db-url=mysql://{}:{}@{}/{} "
+        cmd="drush site-install {} {} {} --db-url=mysql://{}:{}@{}/{} "
             "--site-name='{}' --account-name={} --account-pass={} "
             "--sites-subdir={} -y"
-            "".format(profile, locale, db_user, db_pass, db_host, db_name,
-                      site_name, site_admin_name, site_admin_pass, site_subdir)
+            "".format(profile, profile_opts, locale, db_user, db_pass,
+                      db_host, db_name, site_name, site_admin_name,
+                      site_admin_pass, site_subdir)
     )
     fix_permissions()
 
