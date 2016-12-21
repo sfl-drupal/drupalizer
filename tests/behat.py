@@ -55,8 +55,9 @@ def install():
 
     if not os.path.exists('{}/tests/behat/bin/behat'.format(env.workspace)):
         dk_run(service, user='root',
-               cmd='chown -R {}:{} ../../tests'.format(env.apache_userid,
-                                                       env.local_userid))
+               cmd='chown -R {}:{} {}/tests'.format(env.apache_userid,
+                                                    env.local_userid,
+                                                    env.code_workspace))
         dk_run(
             service,
             cmd='cd {}/tests/behat && composer install'.format(workspace))
