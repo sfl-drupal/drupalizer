@@ -39,6 +39,7 @@ def make(action='install'):
                 abort('Aborting "drush {}" since there might be a risk of '
                       'loosing local data.'.format(action))
 
+    drupal = '{}/drupal'.format(env.workspace)
     drush_opts = "--prepare-install " if action != 'update' else ''
 
     # Update profile codebase
@@ -57,9 +58,9 @@ def make(action='install'):
 
     if env.get('always_use_pty', True):
         drush_opts += " --working-copy --no-gitinfofile"
-    if not os.path.exists(env.site_root):
-        local("mkdir {}".format(env.site_root))
-    with lcd(env.site_root):
+    if not os.path.exists(drupal):
+        local("mkdir {}".format(drupal))
+    with lcd(drupal):
         dk_run(env.services['php'], user='root',
                cmd='chown -R {}:{} .'.format(env.local_userid,
                                              env.apache_userid))
