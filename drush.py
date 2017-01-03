@@ -77,12 +77,15 @@ def aliases():
     workspace = env.workspace
 
     if not os.path.exists(drush_aliases):
-        local('mkdir {}'.format(drush_aliases))
+        dk_run(env.services['php'], user='root',
+               cmd='mkdir {}'.format(drush_aliases))
 
     if os.path.exists('{}/aliases.drushrc.php'.format(drush_aliases)):
-        local('rm {}/aliases.drushrc.php'.format(drush_aliases))
+        dk_run(env.services['php'], user='root',
+               cmd='rm {}/aliases.drushrc.php'.format(drush_aliases))
     if os.path.exists('{}/conf/aliases.drushrc.php'.format(workspace)):
-        local('cp {}/conf/aliases.drushrc.php {}/'.format(workspace,
+        dk_run(env.services['php'], user='root',
+               cmd='cp {}/conf/aliases.drushrc.php {}/'.format(workspace,
                                                           drush_aliases))
         print(green('Drush aliases have been copied to {} directory.'
                     ''.format(drush_aliases)))
