@@ -237,3 +237,13 @@ def import_dump(dump=False):
         print(green('Database dump successfully restored.'))
     else:
         print(red('Could not find database dump at {}'.format(dump)))
+
+
+@task
+def config_import():
+  """
+  Import configurations from a config directory.
+  """
+  dk_run(env.services['php'], user=env.local_userid,
+         cmd="drush config-import -y")
+  print(green('Configurations imported.'))

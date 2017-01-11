@@ -104,3 +104,4 @@ def update():
     """
     execute(drush.make, 'update')
     execute(drush.updatedb)
+    execute(drush.config_import)
