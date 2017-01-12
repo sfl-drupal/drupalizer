@@ -249,7 +249,7 @@ def config_export():
   print(green('Configurations exported.'))
 
 
-@task
+@task(alias='cim')
 def config_import():
   """
   Import configurations from a config directory.
