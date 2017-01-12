@@ -239,6 +239,16 @@ def import_dump(dump=False):
         print(red('Could not find database dump at {}'.format(dump)))
 
 
+@task(alias='cex')
+def config_export():
+  """
+  Export configurations in a config directory.
+  """
+  dk_run(env.services['php'], user=env.local_userid,
+         cmd="drush config-export -y")
+  print(green('Configurations exported.'))
+
+
 @task
 def config_import():
   """
