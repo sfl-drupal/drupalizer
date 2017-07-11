@@ -124,6 +124,16 @@ def site_install():
     if env.site_languages:
         locale = '--locale="{}"'.format(env.site_languages.split(',')[0])
     if env.site_conf and env.site_profile == "config_installer":
+        dk_run(
+            service,
+            user='root',
+            cmd='chown -R {}:{} {}'.format(
+                env.apache_userid,
+                env.local_userid,
+                env.site_conf
+            )
+        )
+
         profile_opts += " config_installer " \
                       "config_installer_sync_configure_form.sync_directory=" \
                       "{}".format(env.site_conf)
