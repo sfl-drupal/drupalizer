@@ -10,7 +10,7 @@ import helpers as h
 
 def docker_ps(running_only=False):
     args = '' if running_only else '-a'
-    result = local('docker ps %s' % args, capture=True)
+    result = local('docker ps --no-trunc  %s' % args, capture=True)
     lines = result.stdout.splitlines()
     # container name is supposed to be the last column
     assert lines[0].strip().endswith('NAMES')
